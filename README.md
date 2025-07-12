@@ -2,7 +2,10 @@
 
 [![PyPI Version](https://img.shields.io/pypi/v/bml-connect-python.svg)](https://pypi.org/project/bml-connect-python/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/bml-connect-python.svg)](https://pypi.org/project/bml-connect-python/)
-[![License](https://img.shields.io/pypi/l/bml-connect-python.svg)](https://opensource.org/licenses/MIT)
+[![LICENSE](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+
+[![ViewCount](https://views.whatilearened.today/views/github/quillfires/bml-connect-python.svg)](https://views.whatilearened.today/views/github/quillfires/bml-connect-python.svg)  [![GitHub forks](https://img.shields.io/github/forks/quillfires/bml-connect-python)](https://github.com/quillfires/bml-connect-python/network)  [![GitHub stars](https://img.shields.io/github/stars/quillfires/bml-connect-python.svg?color=ffd40c)](https://github.com/quillfires/bml-connect-python/stargazers)  [![PyPI - Downloads](https://img.shields.io/pypi/dm/bml-connect-python?color=orange&label=PIP%20-%20Installs)](https://pypi.python.org/pypi/bml-connect-python/) [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/quillfires/bml-connect-python/issues)  [![GitHub issues](https://img.shields.io/github/issues/quillfires/bml-connect-python.svg?color=808080)](https://github.com/quillfires/bml-connect-python/issues) 
 
 Python SDK for Bank of Maldives Connect API with synchronous and asynchronous support.  
 Compatible with all Python frameworks including Django, Flask, FastAPI, and Sanic.
