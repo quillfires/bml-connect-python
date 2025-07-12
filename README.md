@@ -221,10 +221,10 @@ MIT License. See `LICENSE` for details.
 
 ## Links
 
-- [Homepage](https://github.com/bankofmaldives/bml-connect-python)
+- [Homepage](https://github.com/quillfires/bml-connect-python)
 - [Documentation](https://bml-connect-python.readthedocs.io)
 - [API Reference](docs/api_reference.md)
-- [Changelog](https://github.com/bankofmaldives/bml-connect-python/releases)
+- [Changelog](https://github.com/quillfires/bml-connect-python/releases)
 
 ---
 
