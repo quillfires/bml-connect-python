@@ -8,14 +8,13 @@ dynamic = ["version"]
 description = "Python SDK for Bank of Maldives Connect API with sync/async support"
 readme = "README.md"
 requires-python = ">=3.7"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "Ali Fayaz", email = "fayaz.quill@gmail.com"},
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
@@ -51,7 +50,6 @@ sanic = ["sanic>=22.0.0"]
 
 [project.urls]
 Homepage = "https://github.com/quillfires/bml-connect-python"
-Documentation = "https://bml-connect-python.readthedocs.io"
 Repository = "https://github.com/quillfires/bml-connect-python"
 Issues = "https://github.com/quillfires/bml-connect-python/issues"
 Changelog = "https://github.com/quillfires/bml-connect-python/releases"

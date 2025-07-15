@@ -21,7 +21,7 @@ import logging
 logger = logging.getLogger("bml_connect")
 logger.addHandler(logging.NullHandler())
 
-SDK_VERSION = "1.0.0"
+SDK_VERSION = "1.1.0"
 USER_AGENT = f"BML-Connect-Python/{SDK_VERSION}"
 
 
@@ -197,18 +197,18 @@ class SignatureUtils:
                 method = SignMethod.SHA1
                 logger.warning(f"Invalid sign method '{method}', defaulting to SHA1")
         
-        # Filtering None values and empty strings
-        filtered_data = {k: v for k, v in data.items() if v is not None and v != ""}
+        amount = data.get('amount')
+        currency = data.get('currency')
         
-        sorted_params = sorted(filtered_data.items(), key=lambda x: x[0].lower())
-        query_string = urlencode(sorted_params, doseq=True)
+        if not amount or not currency:
+            raise ValueError("Amount and currency are required for signature generation")
         
-        signature_string = f"{query_string}&apiKey={api_key}"
+        signature_string = f"amount={amount}&currency={currency}&apiKey={api_key}"
         
         if method == SignMethod.SHA1:
             return hashlib.sha1(signature_string.encode('utf-8')).hexdigest()
         elif method == SignMethod.MD5:
-            return base64.b64encode(hashlib.md5(signature_string.encode('utf-8')).digest()).decode()
+            return base64.b64encode(hashlib.md5(signature_string.encode('utf-8')).digest()).decode('utf-8')
         else:
             raise ValueError(f"Unsupported signature method: {method}")
 
@@ -230,7 +230,8 @@ class BaseClient:
 
     def _get_headers(self) -> Dict[str, str]:
         return {
-            'Authorization': f"Bearer {self.api_key}",
+            'Authorization': f"{self.api_key}",
+            'Accept': 'application/json',
             'Content-Type': 'application/json',
             'User-Agent': USER_AGENT,
             'X-App-Id': self.app_id

@@ -25,7 +25,7 @@ For detailed documentation and examples, visit:
 https://github.com/quillfires/bml-connect-python
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "Ali Fayaz"
 __email__ = "fayaz.quill@gmail.com"
 
