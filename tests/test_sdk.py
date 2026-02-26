@@ -14,11 +14,15 @@ def test_invalid_environment():
     with pytest.raises(ValueError):
         BMLConnect(api_key="test", app_id="test", environment="invalid")
 
+
 @pytest.mark.asyncio
 async def test_async_client_creation():
-    client = BMLConnect(api_key="test", app_id="test", environment=Environment.SANDBOX, async_mode=True)
+    client = BMLConnect(
+        api_key="test", app_id="test", environment=Environment.SANDBOX, async_mode=True
+    )
     assert client.async_mode
     await client.aclose()
+
 
 def test_sync_client_creation():
     client = BMLConnect(api_key="test", app_id="test", environment=Environment.SANDBOX)

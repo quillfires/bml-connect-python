@@ -29,6 +29,7 @@ packages = [{ include = "bml_connect", from = "src" }]
 [tool.poetry.dependencies]
 python = "^3.7"
 httpx = ">=0.23.0"
+requests = ">=2.28.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7.0"
