@@ -14,7 +14,6 @@ import uuid
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
-from urllib.parse import urlencode
 
 import aiohttp
 import requests
@@ -338,7 +337,7 @@ class SyncClient(BaseClient):
             sign_method = SignMethod(data.get("signMethod", "sha1"))
         except ValueError:
             sign_method = SignMethod.SHA1
-            logger.warning(f"Invalid sign method, defaulting to SHA1")
+            logger.warning("Invalid sign method, defaulting to SHA1")
 
         data["signature"] = SignatureUtils.generate_signature(
             data, self.api_key, sign_method
@@ -425,7 +424,7 @@ class AsyncClient(BaseClient):
             sign_method = SignMethod(data.get("signMethod", "sha1"))
         except ValueError:
             sign_method = SignMethod.SHA1
-            logger.warning(f"Invalid sign method, defaulting to SHA1")
+            logger.warning("Invalid sign method, defaulting to SHA1")
 
         data["signature"] = SignatureUtils.generate_signature(
             data, self.api_key, sign_method
