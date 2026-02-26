@@ -13,6 +13,7 @@ import logging
 import uuid
 from dataclasses import dataclass
 from enum import Enum
+from importlib.metadata import PackageNotFoundError, version
 from typing import Any, Dict, List, Optional, Union
 
 import aiohttp
@@ -21,7 +22,11 @@ import requests
 logger = logging.getLogger("bml_connect")
 logger.addHandler(logging.NullHandler())
 
-SDK_VERSION = "1.1.0"
+try:
+    SDK_VERSION = version("bml-connect-python")
+except PackageNotFoundError:
+    SDK_VERSION = "unknown"
+
 USER_AGENT = f"BML-Connect-Python/{SDK_VERSION}"
 
 
@@ -42,11 +47,12 @@ class SignMethod(Enum):
     MD5 = "md5"
 
     @classmethod
-    def _missing_(cls, value: str) -> "SignMethod":
-        value = value.lower()
-        for member in cls:
-            if member.value == value:
-                return member
+    def _missing_(cls, value: object) -> "SignMethod":
+        if isinstance(value, str):
+            value = value.lower()
+            for member in cls:
+                if member.value == value:
+                    return member
         return cls.SHA1  # Default to SHA1
 
 
@@ -92,7 +98,6 @@ class Transaction:
         if qr_data and "url" in qr_data:
             qr_code = QRCode(url=qr_data["url"], image=qr_data.get("image"))
 
-        # Parse state enum
         state = None
         if "state" in data:
             try:
@@ -101,7 +106,6 @@ class Transaction:
                 logger.warning(f"Unknown transaction state: {data['state']}")
                 state = None
 
-        # Parse sign method enum
         sign_method = None
         if "signMethod" in data:
             try:
@@ -246,8 +250,10 @@ class BaseClient:
         self.app_id = app_id
         self.environment = environment
         self.base_url = environment.base_url
-        self.session = None  # Will be set in child classes
-        logger.info(f"Initialized BML Client for {environment.name} environment")
+        self.session: Optional[Union[requests.Session, aiohttp.ClientSession]] = (
+            None  # Will be set in child classes
+        )
+        logger.info("Initialized BML Client for %s environment", environment.name)
 
     def _get_headers(self) -> Dict[str, str]:
         return {
@@ -271,7 +277,7 @@ class BaseClient:
         self,
         response: Union[requests.Response, aiohttp.ClientResponse],
         response_data: Dict[str, Any],
-    ):
+    ) -> None:
         """Handle API response with proper error mapping"""
         status_code = (
             response.status
@@ -281,7 +287,7 @@ class BaseClient:
         message = response_data.get("message", "Unknown error")
         code = response_data.get("code")
 
-        logger.debug(f"API Response: {status_code} - {message}")
+        logger.debug("API Response: %s - %s (code: %s)", status_code, message, code)
 
         if status_code == 400:
             raise ValidationError(message, code, status_code)
@@ -298,35 +304,35 @@ class BaseClient:
 
 
 class SyncClient(BaseClient):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
-        self.session = requests.Session()
+        self.session: requests.Session = requests.Session()
         self.session.headers.update(self._get_headers())
         logger.debug("Initialized synchronous HTTP session")
 
-    def _request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
+    def _request(self, method: str, endpoint: str, **kwargs: Any) -> Dict[str, Any]:
         url = f"{self.base_url}{endpoint}"
-        logger.debug(f"Request: {method} {url} {kwargs.get('params')}")
+        logger.debug("Request: %s %s %s", method, url, kwargs.get("params"))
 
         try:
             response = self.session.request(method, url, timeout=30, **kwargs)
 
             try:
-                response_data = response.json()
+                response_data: Dict[str, Any] = response.json()
             except json.JSONDecodeError:
-                logger.error(f"Invalid JSON response: {response.text[:500]}")
+                logger.error("Invalid JSON response: %s", response.text[:500])
                 raise ServerError(
                     "Invalid JSON response", status_code=response.status_code
                 )
 
-            logger.debug(f"Response: {response.status_code} - {response_data}")
+            logger.debug("Response: %s - %s", response.status_code, response_data)
 
             if not response.ok:
                 self._handle_response(response, response_data)
 
             return response_data
         except requests.exceptions.RequestException as e:
-            logger.error(f"Network error: {str(e)}")
+            logger.error("Network error: %s", str(e))
             raise BMLConnectError(f"Network error: {str(e)}")
 
     def create_transaction(self, data: Dict[str, Any]) -> Transaction:
@@ -347,7 +353,7 @@ class SyncClient(BaseClient):
         return Transaction.from_dict(response)
 
     def get_transaction(self, transaction_id: str) -> Transaction:
-        logger.info(f"Fetching transaction: {transaction_id}")
+        logger.info("Fetching transaction: %s", transaction_id)
         response = self._request("GET", f"/transactions/{transaction_id}")
         return Transaction.from_dict(response)
 
@@ -360,8 +366,8 @@ class SyncClient(BaseClient):
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
     ) -> PaginatedResponse:
-        logger.info(f"Listing transactions: page={page}, per_page={per_page}")
-        params = {"page": page, "perPage": per_page}
+        logger.info("Listing transactions: page=%s, per_page=%s", page, per_page)
+        params: Dict[str, Any] = {"page": page, "perPage": per_page}
 
         # Add filters
         if state:
@@ -376,7 +382,7 @@ class SyncClient(BaseClient):
         response = self._request("GET", "/transactions", params=params)
         return PaginatedResponse.from_dict(response)
 
-    def close(self):
+    def close(self) -> None:
         """Close the HTTP session"""
         if self.session:
             self.session.close()
@@ -384,36 +390,38 @@ class SyncClient(BaseClient):
 
 
 class AsyncClient(BaseClient):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
-        self.session = aiohttp.ClientSession(
+        self.session: aiohttp.ClientSession = aiohttp.ClientSession(
             headers=self._get_headers(), timeout=aiohttp.ClientTimeout(total=30)
         )
         logger.debug("Initialized asynchronous HTTP session")
 
-    async def _request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
+    async def _request(
+        self, method: str, endpoint: str, **kwargs: Any
+    ) -> Dict[str, Any]:
         url = f"{self.base_url}{endpoint}"
-        logger.debug(f"Async Request: {method} {url} {kwargs.get('params')}")
+        logger.debug("Async Request: %s %s %s", method, url, kwargs.get("params"))
 
         try:
             async with self.session.request(method, url, **kwargs) as response:
                 try:
-                    response_data = await response.json()
+                    response_data: Dict[str, Any] = await response.json()
                 except aiohttp.ContentTypeError:
                     text = await response.text()
-                    logger.error(f"Invalid JSON response: {text[:500]}")
+                    logger.error("Invalid JSON response: %s", text[:500])
                     raise ServerError(
                         f"Invalid JSON: {text[:200]}", status_code=response.status
                     )
 
-                logger.debug(f"Async Response: {response.status} - {response_data}")
+                logger.debug("Async Response: %s - %s", response.status, response_data)
 
                 if not response.ok:
                     self._handle_response(response, response_data)
 
                 return response_data
         except aiohttp.ClientError as e:
-            logger.error(f"Network error: {str(e)}")
+            logger.error("Network error: %s", str(e))
             raise BMLConnectError(f"Network error: {str(e)}")
 
     async def create_transaction(self, data: Dict[str, Any]) -> Transaction:
@@ -434,7 +442,7 @@ class AsyncClient(BaseClient):
         return Transaction.from_dict(response)
 
     async def get_transaction(self, transaction_id: str) -> Transaction:
-        logger.info(f"Fetching transaction (async): {transaction_id}")
+        logger.info("Fetching transaction (async): %s", transaction_id)
         response = await self._request("GET", f"/transactions/{transaction_id}")
         return Transaction.from_dict(response)
 
@@ -447,8 +455,10 @@ class AsyncClient(BaseClient):
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
     ) -> PaginatedResponse:
-        logger.info(f"Listing transactions (async): page={page}, per_page={per_page}")
-        params = {"page": page, "perPage": per_page}
+        logger.info(
+            "Listing transactions (async): page=%s, per_page=%s", page, per_page
+        )
+        params: Dict[str, Any] = {"page": page, "perPage": per_page}
 
         # Add filters
         if state:
@@ -463,7 +473,7 @@ class AsyncClient(BaseClient):
         response = await self._request("GET", "/transactions", params=params)
         return PaginatedResponse.from_dict(response)
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the HTTP session"""
         if self.session and not self.session.closed:
             await self.session.close()
@@ -501,6 +511,7 @@ class BMLConnect:
             self.environment = environment
 
         self.async_mode = async_mode
+        self.client: Union[SyncClient, AsyncClient]
 
         if async_mode:
             self.client = AsyncClient(api_key, app_id, self.environment)
@@ -508,7 +519,7 @@ class BMLConnect:
             self.client = SyncClient(api_key, app_id, self.environment)
 
     @property
-    def transactions(self):
+    def transactions(self) -> Union[SyncClient, AsyncClient]:
         return self.client
 
     def verify_webhook_signature(
@@ -535,7 +546,8 @@ class BMLConnect:
                 raise ValidationError("Invalid JSON payload")
 
         # Create a copy and remove signature if present
-        verification_payload = payload.copy()
+        payload_dict: Dict[str, Any] = payload
+        verification_payload = payload_dict.copy()
         if "signature" in verification_payload:
             del verification_payload["signature"]
 
@@ -543,14 +555,14 @@ class BMLConnect:
             verification_payload, signature, self.api_key, method
         )
 
-    def close(self):
+    def close(self) -> None:
         """Clean up resources (synchronous)"""
-        if not self.async_mode and hasattr(self.client, "close"):
+        if isinstance(self.client, SyncClient):
             self.client.close()
 
-    async def aclose(self):
+    async def aclose(self) -> None:
         """Clean up resources (asynchronous)"""
-        if self.async_mode and hasattr(self.client, "close"):
+        if isinstance(self.client, AsyncClient):
             await self.client.close()
 
 
