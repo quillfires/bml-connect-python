@@ -118,7 +118,7 @@ jobs:
   # ── 5. Create GitHub Release with changelog ─────────────────────────────────
   github-release:
     name: Create GitHub Release
-    needs: build
+    needs: [build, validate]
     runs-on: ubuntu-latest
     permissions:
       contents: write
