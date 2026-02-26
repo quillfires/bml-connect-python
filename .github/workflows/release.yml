@@ -113,13 +113,12 @@ jobs:
 
       - name: Publish to PyPI (trusted publishing / OIDC)
         uses: pypa/gh-action-pypi-publish@release/v1
-        # No API token needed — uses PyPI's OIDC trusted publisher.
-        # Configure once on PyPI: https://pypi.org/manage/project/bml-connect-python/settings/publishing/
+        continue-on-error: true
 
   # ── 5. Create GitHub Release with changelog ─────────────────────────────────
   github-release:
     name: Create GitHub Release
-    needs: publish-pypi
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -145,6 +144,15 @@ jobs:
           echo "notes<<EOF" >> "$GITHUB_OUTPUT"
           echo "$NOTES" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Debug changelog extraction
+        run: |
+          VERSION="${{ needs.validate.outputs.version }}"
+          echo "Looking for version: $VERSION"
+          echo "--- CHANGELOG.md first 20 lines ---"
+          head -20 CHANGELOG.md
+          echo "--- awk result ---"
+          awk "/^## \[${VERSION}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

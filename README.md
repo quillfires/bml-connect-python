@@ -4,8 +4,7 @@
 [![Python Support](https://img.shields.io/pypi/pyversions/bml-connect-python.svg)](https://pypi.org/project/bml-connect-python/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-
-[![ViewCount](https://views.whatilearened.today/views/github/quillfires/bml-connect-python.svg)](https://views.whatilearened.today/views/github/quillfires/bml-connect-python.svg)  [![GitHub forks](https://img.shields.io/github/forks/quillfires/bml-connect-python)](https://github.com/quillfires/bml-connect-python/network)  [![GitHub stars](https://img.shields.io/github/stars/quillfires/bml-connect-python.svg?color=ffd40c)](https://github.com/quillfires/bml-connect-python/stargazers)  [![PyPI - Downloads](https://img.shields.io/pypi/dm/bml-connect-python?color=orange&label=PIP%20-%20Installs)](https://pypi.python.org/pypi/bml-connect-python/) [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/quillfires/bml-connect-python/issues)  [![GitHub issues](https://img.shields.io/github/issues/quillfires/bml-connect-python.svg?color=808080)](https://github.com/quillfires/bml-connect-python/issues) 
+[![ViewCount](https://views.whatilearened.today/views/github/quillfires/bml-connect-python.svg)](https://views.whatilearened.today/views/github/quillfires/bml-connect-python.svg) [![GitHub forks](https://img.shields.io/github/forks/quillfires/bml-connect-python)](https://github.com/quillfires/bml-connect-python/network) [![GitHub stars](https://img.shields.io/github/stars/quillfires/bml-connect-python.svg?color=ffd40c)](https://github.com/quillfires/bml-connect-python/stargazers) [![PyPI - Downloads](https://img.shields.io/pypi/dm/bml-connect-python?color=orange&label=PIP%20-%20Installs)](https://pypi.python.org/pypi/bml-connect-python/) [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/quillfires/bml-connect-python/issues) [![GitHub issues](https://img.shields.io/github/issues/quillfires/bml-connect-python.svg?color=808080)](https://github.com/quillfires/bml-connect-python/issues)
 
 Python SDK for Bank of Maldives Connect API with synchronous and asynchronous support.  
 Compatible with all Python frameworks including Django, Flask, FastAPI, and Sanic.
@@ -68,7 +67,7 @@ async def main():
         environment=Environment.SANDBOX,
         async_mode=True
     )
-    
+
     try:
         transaction = await client.transactions.create_transaction({
             "amount": 2000,
@@ -98,7 +97,7 @@ client = BMLConnect(api_key="your_api_key", app_id="your_app_id")
 def webhook():
     payload = request.get_json()
     signature = payload.get('signature')
-    
+
     if client.verify_webhook_signature(payload, signature):
         # Process webhook
         return jsonify({"status": "success"}), 200
@@ -119,7 +118,7 @@ client = BMLConnect(api_key="your_api_key", app_id="your_app_id")
 async def handle_webhook(request: Request):
     payload = await request.json()
     signature = payload.get("signature")
-    
+
     if client.verify_webhook_signature(payload, signature):
         return {"status": "success"}
     else:
@@ -139,7 +138,7 @@ client = BMLConnect(api_key="your_api_key", app_id="your_app_id")
 async def webhook(request):
     payload = request.json
     signature = payload.get('signature')
-    
+
     if client.verify_webhook_signature(payload, signature):
         return response.json({"status": "success"})
     else:
@@ -212,11 +211,11 @@ transactions = client.transactions.list_transactions(
 @app.route('/webhook', methods=['POST'])
 def handle_webhook():
     payload = request.get_json()
-    
+
     # Verify webhook signature
     if not client.verify_webhook_signature(payload, payload.get('signature')):
         return {"error": "Invalid signature"}, 403
-    
+
     # Process different webhook events
     event_type = payload.get('event_type')
     if event_type == 'transaction.completed':
@@ -226,7 +225,7 @@ def handle_webhook():
     elif event_type == 'transaction.failed':
         # Handle failed transaction
         pass
-    
+
     return {"status": "success"}
 ```
 
@@ -303,13 +302,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
+See [CHANGELOG.md](https://github.com/quillfires/bml-connect-python/blob/main/CHANGELOG.md) for a detailed history of changes.
 
 ## Security
 
 If you discover any security-related issues, please email fayaz.quill@gmail.com instead of using the issue tracker.
 
 ---
-
 
 Made with ❤️ for the Maldivian developer community
