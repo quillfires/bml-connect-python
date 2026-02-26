@@ -546,6 +546,7 @@ class BMLConnect:
                 raise ValidationError("Invalid JSON payload")
 
         # Create a copy and remove signature if present
+        assert isinstance(payload, dict)
         payload_dict: Dict[str, Any] = payload
         verification_payload = payload_dict.copy()
         if "signature" in verification_payload:
