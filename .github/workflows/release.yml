@@ -139,20 +139,17 @@ jobs:
           VERSION="${{ needs.validate.outputs.version }}"
           NOTES=$(awk "/^## \[${VERSION}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
           if [ -z "$NOTES" ]; then
+            PREV_TAG=$(git tag --sort=-version:refname | grep -v "v${VERSION}" | head -1)
+            if [ -n "$PREV_TAG" ]; then
+              NOTES=$(git log "${PREV_TAG}..HEAD" --pretty=format:"- %s" --no-merges | head -20)
+            fi
+          fi
+          if [ -z "$NOTES" ]; then
             NOTES="See CHANGELOG.md for details."
           fi
           echo "notes<<EOF" >> "$GITHUB_OUTPUT"
           echo "$NOTES" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
-
-      - name: Debug changelog extraction
-        run: |
-          VERSION="${{ needs.validate.outputs.version }}"
-          echo "Looking for version: $VERSION"
-          echo "--- CHANGELOG.md first 20 lines ---"
-          head -20 CHANGELOG.md
-          echo "--- awk result ---"
-          awk "/^## \[${VERSION}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
