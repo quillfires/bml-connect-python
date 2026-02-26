@@ -138,11 +138,10 @@ jobs:
         id: changelog
         run: |
           VERSION="${{ needs.validate.outputs.version }}"
-          # Extract the block between this version header and the next
-          NOTES=$(awk "/^## \[?v?${VERSION}\]?/,/^## \[?v?[0-9]/" CHANGELOG.md \
-                  | grep -v "^## \[?v?[0-9]" \
-                  | sed '/^[[:space:]]*$/d' \
-                  || echo "See CHANGELOG.md for details.")
+          NOTES=$(awk "/^## \[${VERSION}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
+          if [ -z "$NOTES" ]; then
+            NOTES="See CHANGELOG.md for details."
+          fi
           echo "notes<<EOF" >> "$GITHUB_OUTPUT"
           echo "$NOTES" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
