@@ -1,6 +1,8 @@
-import pytest
 import asyncio
-from bml_connect import BMLConnect, Environment, SignatureUtils, BMLConnectError
+
+import pytest
+
+from bml_connect import BMLConnect, BMLConnectError, Environment, SignatureUtils
 
 
 def test_webhook_signature_verification():
