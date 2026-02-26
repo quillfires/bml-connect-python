@@ -20,6 +20,9 @@ jobs:
 
       - name: Install Poetry
         uses: snok/install-poetry@v1
+        with:
+          version: "1.8.5"
+          virtualenvs-in-project: true
 
       - name: Get version from tag
         id: get_version
@@ -52,6 +55,7 @@ jobs:
 
       - uses: snok/install-poetry@v1
         with:
+          version: "1.8.5"
           virtualenvs-in-project: true
 
       - uses: actions/cache@v4
@@ -75,6 +79,9 @@ jobs:
           python-version: "3.11"
 
       - uses: snok/install-poetry@v1
+        with:
+          version: "1.8.5"
+          virtualenvs-in-project: true
 
       - name: Build wheel and sdist
         run: poetry build
