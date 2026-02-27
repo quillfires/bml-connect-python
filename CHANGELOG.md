@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-02-27
+
+### Fixed
+
+- `__version__` in `__init__.py` was not updated from `1.1.0` after the 1.2.0 release
+- Docstring in `__init__.py` still referenced the old manual `client.close()` pattern instead of context managers
+
+### Changed
+
+- `examples/basic_sync.py` updated to use `with` context manager and added `cancel_transaction` example
+- `examples/basic_async.py` updated to use `async with` context manager and added `cancel_transaction` example
+
 ## [1.2.0] - 2026-02-27
 
 ### Added

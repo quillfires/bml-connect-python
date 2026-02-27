@@ -5,27 +5,29 @@ BML Connect Python SDK
 Python SDK for Bank of Maldives Connect API with synchronous and asynchronous support.
 
 Features:
-- Create, retrieve, and list transactions
+- Create, retrieve, cancel, and list transactions
 - Verify webhook signatures
 - Supports both production and sandbox environments
-- Full sync/async compatibility
+- Full sync/async compatibility with context manager support
 
 Basic Usage:
     from bml_connect import BMLConnect, Environment
 
-    # Sync client
-    client = BMLConnect('your-api-key', 'your-app-id', Environment.SANDBOX)
-    transaction = client.transactions.create_transaction({...})
+    # Sync client (context manager)
+    with BMLConnect('your-api-key', 'your-app-id', Environment.SANDBOX) as client:
+        transaction = client.transactions.create_transaction({...})
 
-    # Async client
-    async_client = BMLConnect('your-api-key', 'your-app-id', Environment.SANDBOX, async_mode=True)
-    transaction = await async_client.transactions.create_transaction({...})
+    # Async client (context manager)
+    async with BMLConnect(
+        'your-api-key', 'your-app-id', Environment.SANDBOX, async_mode=True
+    ) as client:
+        transaction = await client.transactions.create_transaction({...})
 
 For detailed documentation and examples, visit:
 https://github.com/quillfires/bml-connect-python
 """
 
-__version__ = "1.1.0"
+__version__ = "1.2.1"
 __author__ = "Ali Fayaz"
 __email__ = "fayaz.quill@gmail.com"
 
