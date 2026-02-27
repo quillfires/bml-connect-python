@@ -12,10 +12,11 @@ Compatible with all Python frameworks including Django, Flask, FastAPI, and Sani
 ## Features
 
 - **🔄 Sync/Async Support**: Choose your preferred programming style
-- **🎯 Full API Coverage**: Transactions, webhooks, and signature verification
+- **🎯 Full API Coverage**: Create, retrieve, cancel transactions; webhook signature verification
 - **📝 Type Annotations**: Full type hint support for better development experience
 - **🛡️ Error Handling**: Comprehensive error hierarchy for easy debugging
 - **🚀 Framework Agnostic**: Works with any Python web framework
+- **🔒 Context Manager Support**: Automatic resource cleanup with `with`/`async with`
 - **📄 MIT Licensed**: Open source and free to use
 
 ## Installation
@@ -31,13 +32,12 @@ pip install bml-connect-python
 ```python
 from bml_connect import BMLConnect, Environment
 
-client = BMLConnect(
+# Use as a context manager for automatic cleanup
+with BMLConnect(
     api_key="your_api_key",
     app_id="your_app_id",
     environment=Environment.SANDBOX
-)
-
-try:
+) as client:
     transaction = client.transactions.create_transaction({
         "amount": 1500,  # 15.00 MVR
         "currency": "MVR",
@@ -48,10 +48,6 @@ try:
     })
     print(f"Transaction ID: {transaction.transaction_id}")
     print(f"Payment URL: {transaction.url}")
-except Exception as e:
-    print(f"Error: {e}")
-finally:
-    client.close()
 ```
 
 ### Asynchronous Usage
@@ -61,14 +57,12 @@ import asyncio
 from bml_connect import BMLConnect, Environment
 
 async def main():
-    client = BMLConnect(
+    async with BMLConnect(
         api_key="your_api_key",
         app_id="your_app_id",
         environment=Environment.SANDBOX,
         async_mode=True
-    )
-
-    try:
+    ) as client:
         transaction = await client.transactions.create_transaction({
             "amount": 2000,
             "currency": "MVR",
@@ -76,8 +70,6 @@ async def main():
             "redirectUrl": "https://yourstore.com/success"
         })
         print(f"Transaction ID: {transaction.transaction_id}")
-    finally:
-        await client.aclose()
 
 asyncio.run(main())
 ```
@@ -147,25 +139,59 @@ async def webhook(request):
 
 ## API Reference
 
+### `BMLConnect(api_key, app_id, environment, async_mode, timeout)`
+
+Main entry point for the SDK.
+
+| Parameter     | Type                   | Default      | Description                                       |
+| ------------- | ---------------------- | ------------ | ------------------------------------------------- |
+| `api_key`     | `str`                  | required     | Your API key from the BML merchant portal         |
+| `app_id`      | `str`                  | required     | Your application ID from the BML merchant portal  |
+| `environment` | `Environment` or `str` | `PRODUCTION` | `Environment.SANDBOX` or `Environment.PRODUCTION` |
+| `async_mode`  | `bool`                 | `False`      | Set `True` to use async methods                   |
+| `timeout`     | `int`                  | `30`         | Request timeout in seconds                        |
+
+### Transaction Methods
+
+| Method                     | Sync | Async | Description                             |
+| -------------------------- | ---- | ----- | --------------------------------------- |
+| `create_transaction(data)` | ✅   | ✅    | Create a new payment transaction        |
+| `get_transaction(id)`      | ✅   | ✅    | Retrieve a transaction by ID            |
+| `cancel_transaction(id)`   | ✅   | ✅    | Cancel a transaction by ID              |
+| `list_transactions(...)`   | ✅   | ✅    | List transactions with optional filters |
+
+### `list_transactions` Parameters
+
+```python
+client.transactions.list_transactions(
+    page=1,
+    per_page=20,
+    state="CONFIRMED",       # Filter by TransactionState value
+    provider="alipay",       # Filter by provider
+    start_date="2026-01-01", # Filter from date
+    end_date="2026-02-01",   # Filter to date
+)
+```
+
 ### Core Classes
 
 - **`BMLConnect`**: Main entry point for the SDK
-- **`Transaction`**: Transaction object with all transaction details
-- **`QRCode`**: QR code details for payment processing
-- **`PaginatedResponse`**: For paginated transaction lists
-- **`Environment`**: Enum for `SANDBOX` and `PRODUCTION` environments
-- **`SignMethod`**: Enum for signature methods
-- **`TransactionState`**: Enum for transaction states
+- **`Transaction`**: Typed transaction object returned by all transaction methods
+- **`QRCode`**: QR code details attached to a transaction
+- **`PaginatedResponse`**: Wraps paginated transaction list results
+- **`Environment`**: `SANDBOX` or `PRODUCTION`
+- **`SignMethod`**: `SHA1` (default) or `MD5`
+- **`TransactionState`**: `CREATED`, `QR_CODE_GENERATED`, `CONFIRMED`, `CANCELLED`, `FAILED`, `EXPIRED`, `REFUND_REQUESTED`, `REFUNDED`
 
 ### Exception Hierarchy
 
 ```
 BMLConnectError
-├── AuthenticationError
-├── ValidationError
-├── NotFoundError
-├── ServerError
-└── RateLimitError
+├── AuthenticationError   (401)
+├── ValidationError       (400)
+├── NotFoundError         (404)
+├── ServerError           (5xx)
+└── RateLimitError        (429)
 ```
 
 ### Signature Utilities
@@ -173,10 +199,10 @@ BMLConnectError
 ```python
 from bml_connect import SignatureUtils
 
-# Generate signature
+# Generate a signature manually
 signature = SignatureUtils.generate_signature(data, api_key, method)
 
-# Verify signature
+# Verify a signature with constant-time comparison
 is_valid = SignatureUtils.verify_signature(data, signature, api_key, method)
 ```
 
@@ -185,24 +211,31 @@ is_valid = SignatureUtils.verify_signature(data, signature, api_key, method)
 ### Transaction Management
 
 ```python
-# Create a transaction
-transaction = client.transactions.create_transaction({
-    "amount": 5000,
-    "currency": "MVR",
-    "provider": "alipay",
-    "redirectUrl": "https://yourstore.com/success",
-    "localId": "order_456"
-})
+with BMLConnect(api_key="your_api_key", app_id="your_app_id") as client:
+    # Create
+    transaction = client.transactions.create_transaction({
+        "amount": 5000,
+        "currency": "MVR",
+        "provider": "alipay",
+        "redirectUrl": "https://yourstore.com/success",
+        "localId": "order_456"
+    })
 
-# Get transaction details
-details = client.transactions.get_transaction(transaction.transaction_id)
+    # Retrieve
+    details = client.transactions.get_transaction(transaction.transaction_id)
+    print(f"State: {details.state}")
 
-# List transactions with pagination
-transactions = client.transactions.list_transactions(
-    page=1,
-    per_page=10,
-    status="completed"
-)
+    # Cancel
+    cancelled = client.transactions.cancel_transaction(transaction.transaction_id)
+
+    # List with filters
+    results = client.transactions.list_transactions(
+        page=1,
+        per_page=10,
+        state="CONFIRMED"
+    )
+    for t in results.items:
+        print(t.transaction_id, t.amount, t.state)
 ```
 
 ### Webhook Handling
@@ -212,38 +245,44 @@ transactions = client.transactions.list_transactions(
 def handle_webhook():
     payload = request.get_json()
 
-    # Verify webhook signature
     if not client.verify_webhook_signature(payload, payload.get('signature')):
         return {"error": "Invalid signature"}, 403
 
-    # Process different webhook events
-    event_type = payload.get('event_type')
-    if event_type == 'transaction.completed':
-        # Handle completed transaction
-        transaction_id = payload.get('transaction_id')
-        # Your business logic here
-    elif event_type == 'transaction.failed':
-        # Handle failed transaction
-        pass
+    state = payload.get('state')
+    if state == 'CONFIRMED':
+        pass  # fulfil the order
+    elif state == 'REFUND_REQUESTED':
+        pass  # initiate refund flow
+    elif state == 'REFUNDED':
+        pass  # mark order as refunded
 
     return {"status": "success"}
 ```
 
+### Custom Timeout
+
+```python
+# For slow network environments or large payloads
+client = BMLConnect(
+    api_key="your_api_key",
+    app_id="your_app_id",
+    timeout=60
+)
+```
+
 ## Requirements
 
-- Python 3.7+
-- See `requirements.txt` and `requirements-dev.txt` for dependencies
+- Python 3.9+
+- `requests`
+- `aiohttp`
 
 ## Development
 
-### Setup Development Environment
+### Setup
 
 ```bash
-# Clone the repository
 git clone https://github.com/quillfires/bml-connect-python.git
 cd bml-connect-python
-
-# Install in development mode
 pip install -e .[dev]
 ```
 
@@ -256,13 +295,8 @@ pytest
 ### Code Quality
 
 ```bash
-# Format code
 black .
-
-# Lint code
 flake8 .
-
-# Type checking
 mypy .
 ```
 
@@ -281,7 +315,7 @@ bml-connect-python/
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+Contributions are welcome. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 1. Fork the repository
 2. Create a feature branch
@@ -292,7 +326,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License — see [LICENSE](LICENSE) for details.
 
 ## Support
 
@@ -302,11 +336,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
-See [CHANGELOG.md](https://github.com/quillfires/bml-connect-python/blob/main/CHANGELOG.md) for a detailed history of changes.
+See [CHANGELOG.md](https://github.com/quillfires/bml-connect-python/blob/main/CHANGELOG.md) for a full history of changes.
 
 ## Security
 
-If you discover any security-related issues, please email fayaz.quill@gmail.com instead of using the issue tracker.
+If you discover a security issue, please email fayaz.quill@gmail.com instead of opening a public issue.
 
 ---
 

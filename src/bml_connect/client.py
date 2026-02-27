@@ -49,9 +49,9 @@ class SignMethod(Enum):
     @classmethod
     def _missing_(cls, value: object) -> "SignMethod":
         if isinstance(value, str):
-            value = value.lower()
+            normalized = value.lower()
             for member in cls:
-                if member.value == value:
+                if member.value == normalized:
                     return member
         return cls.SHA1  # Default to SHA1
 
@@ -63,6 +63,8 @@ class TransactionState(Enum):
     CANCELLED = "CANCELLED"
     FAILED = "FAILED"
     EXPIRED = "EXPIRED"
+    REFUND_REQUESTED = "REFUND_REQUESTED"
+    REFUNDED = "REFUNDED"
 
 
 @dataclass
@@ -103,7 +105,7 @@ class Transaction:
             try:
                 state = TransactionState(data["state"])
             except ValueError:
-                logger.warning(f"Unknown transaction state: {data['state']}")
+                logger.warning("Unknown transaction state: %s", data["state"])
                 state = None
 
         sign_method = None
@@ -111,7 +113,7 @@ class Transaction:
             try:
                 sign_method = SignMethod(data["signMethod"])
             except ValueError:
-                logger.warning(f"Unknown sign method: {data['signMethod']}")
+                logger.warning("Unknown sign method: %s", data["signMethod"])
                 sign_method = None
 
         return cls(
@@ -202,16 +204,17 @@ class SignatureUtils:
     ) -> str:
         """Generate signature with proper key sorting and encoding"""
         if isinstance(method, str):
+            original_value = method
             try:
                 method = SignMethod(method)
             except ValueError:
+                logger.warning("Invalid sign method '%s', defaulting to SHA1", original_value)
                 method = SignMethod.SHA1
-                logger.warning(f"Invalid sign method '{method}', defaulting to SHA1")
 
         amount = data.get("amount")
         currency = data.get("currency")
 
-        if not amount or not currency:
+        if amount is None or not currency:
             raise ValueError(
                 "Amount and currency are required for signature generation"
             )
@@ -245,19 +248,19 @@ class BaseClient:
         api_key: str,
         app_id: str,
         environment: Environment = Environment.PRODUCTION,
+        timeout: int = 30,
     ):
         self.api_key = api_key
         self.app_id = app_id
         self.environment = environment
         self.base_url = environment.base_url
-        self.session: Optional[Union[requests.Session, aiohttp.ClientSession]] = (
-            None  # Will be set in child classes
-        )
+        self.timeout = timeout
+        self.session: Optional[Union[requests.Session, aiohttp.ClientSession]] = None
         logger.info("Initialized BML Client for %s environment", environment.name)
 
     def _get_headers(self) -> Dict[str, str]:
         return {
-            "Authorization": f"{self.api_key}",
+            "Authorization": self.api_key,
             "Accept": "application/json",
             "Content-Type": "application/json",
             "User-Agent": USER_AGENT,
@@ -310,12 +313,18 @@ class SyncClient(BaseClient):
         self.session.headers.update(self._get_headers())
         logger.debug("Initialized synchronous HTTP session")
 
+    def __enter__(self) -> "SyncClient":
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.close()
+
     def _request(self, method: str, endpoint: str, **kwargs: Any) -> Dict[str, Any]:
         url = f"{self.base_url}{endpoint}"
         logger.debug("Request: %s %s %s", method, url, kwargs.get("params"))
 
         try:
-            response = self.session.request(method, url, timeout=30, **kwargs)
+            response = self.session.request(method, url, timeout=self.timeout, **kwargs)
 
             try:
                 response_data: Dict[str, Any] = response.json()
@@ -357,6 +366,12 @@ class SyncClient(BaseClient):
         response = self._request("GET", f"/transactions/{transaction_id}")
         return Transaction.from_dict(response)
 
+    def cancel_transaction(self, transaction_id: str) -> Transaction:
+        """Cancel a transaction by ID"""
+        logger.info("Cancelling transaction: %s", transaction_id)
+        response = self._request("DELETE", f"/transactions/{transaction_id}")
+        return Transaction.from_dict(response)
+
     def list_transactions(
         self,
         page: int = 1,
@@ -369,14 +384,14 @@ class SyncClient(BaseClient):
         logger.info("Listing transactions: page=%s, per_page=%s", page, per_page)
         params: Dict[str, Any] = {"page": page, "perPage": per_page}
 
-        # Add filters
-        if state:
+        # FIX: Use `is not None` so that an explicit empty string isn't silently dropped
+        if state is not None:
             params["state"] = state
-        if provider:
+        if provider is not None:
             params["provider"] = provider
-        if start_date:
+        if start_date is not None:
             params["startDate"] = start_date
-        if end_date:
+        if end_date is not None:
             params["endDate"] = end_date
 
         response = self._request("GET", "/transactions", params=params)
@@ -392,10 +407,24 @@ class SyncClient(BaseClient):
 class AsyncClient(BaseClient):
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
-        self.session: aiohttp.ClientSession = aiohttp.ClientSession(
-            headers=self._get_headers(), timeout=aiohttp.ClientTimeout(total=30)
-        )
-        logger.debug("Initialized asynchronous HTTP session")
+        self._session: Optional[aiohttp.ClientSession] = None
+        logger.debug("Initialized asynchronous client (session deferred)")
+
+    async def __aenter__(self) -> "AsyncClient":
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        await self.close()
+
+    def _get_session(self) -> aiohttp.ClientSession:
+        """Lazily create the aiohttp session within an async context"""
+        if self._session is None or self._session.closed:
+            self._session = aiohttp.ClientSession(
+                headers=self._get_headers(),
+                timeout=aiohttp.ClientTimeout(total=self.timeout),
+            )
+            logger.debug("Created asynchronous HTTP session")
+        return self._session
 
     async def _request(
         self, method: str, endpoint: str, **kwargs: Any
@@ -403,8 +432,9 @@ class AsyncClient(BaseClient):
         url = f"{self.base_url}{endpoint}"
         logger.debug("Async Request: %s %s %s", method, url, kwargs.get("params"))
 
+        session = self._get_session()
         try:
-            async with self.session.request(method, url, **kwargs) as response:
+            async with session.request(method, url, **kwargs) as response:
                 try:
                     response_data: Dict[str, Any] = await response.json()
                 except aiohttp.ContentTypeError:
@@ -446,6 +476,12 @@ class AsyncClient(BaseClient):
         response = await self._request("GET", f"/transactions/{transaction_id}")
         return Transaction.from_dict(response)
 
+    async def cancel_transaction(self, transaction_id: str) -> Transaction:
+        """Cancel a transaction by ID"""
+        logger.info("Cancelling transaction (async): %s", transaction_id)
+        response = await self._request("DELETE", f"/transactions/{transaction_id}")
+        return Transaction.from_dict(response)
+
     async def list_transactions(
         self,
         page: int = 1,
@@ -460,14 +496,14 @@ class AsyncClient(BaseClient):
         )
         params: Dict[str, Any] = {"page": page, "perPage": per_page}
 
-        # Add filters
-        if state:
+        # FIX: Use `is not None` so that an explicit empty string isn't silently dropped
+        if state is not None:
             params["state"] = state
-        if provider:
+        if provider is not None:
             params["provider"] = provider
-        if start_date:
+        if start_date is not None:
             params["startDate"] = start_date
-        if end_date:
+        if end_date is not None:
             params["endDate"] = end_date
 
         response = await self._request("GET", "/transactions", params=params)
@@ -475,8 +511,8 @@ class AsyncClient(BaseClient):
 
     async def close(self) -> None:
         """Close the HTTP session"""
-        if self.session and not self.session.closed:
-            await self.session.close()
+        if self._session and not self._session.closed:
+            await self._session.close()
             logger.debug("Closed asynchronous HTTP session")
 
 
@@ -487,6 +523,7 @@ class BMLConnect:
         app_id: str,
         environment: Union[Environment, str] = Environment.PRODUCTION,
         async_mode: bool = False,
+        timeout: int = 30,
     ):
         """
         Initialize BML Connect client
@@ -496,6 +533,7 @@ class BMLConnect:
             app_id: Your application ID from BML merchant portal
             environment: 'production' or 'sandbox' (default: production)
             async_mode: Whether to use async operations (default: False)
+            timeout: Request timeout in seconds (default: 30)
         """
         self.api_key = api_key
         self.app_id = app_id
@@ -514,9 +552,29 @@ class BMLConnect:
         self.client: Union[SyncClient, AsyncClient]
 
         if async_mode:
-            self.client = AsyncClient(api_key, app_id, self.environment)
+            self.client = AsyncClient(api_key, app_id, self.environment, timeout)
         else:
-            self.client = SyncClient(api_key, app_id, self.environment)
+            self.client = SyncClient(api_key, app_id, self.environment, timeout)
+
+    def __enter__(self) -> "BMLConnect":
+        if isinstance(self.client, AsyncClient):
+            raise TypeError(
+                "Use 'async with' for async_mode=True clients"
+            )
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.close()
+
+    async def __aenter__(self) -> "BMLConnect":
+        if isinstance(self.client, SyncClient):
+            raise TypeError(
+                "Use 'with' (not 'async with') for async_mode=False clients"
+            )
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        await self.aclose()
 
     @property
     def transactions(self) -> Union[SyncClient, AsyncClient]:
@@ -545,10 +603,10 @@ class BMLConnect:
             except json.JSONDecodeError:
                 raise ValidationError("Invalid JSON payload")
 
-        # Create a copy and remove signature if present
-        assert isinstance(payload, dict)
-        payload_dict: Dict[str, Any] = payload
-        verification_payload = payload_dict.copy()
+        if not isinstance(payload, dict):
+            raise ValidationError("Payload must be a JSON object")
+
+        verification_payload = payload.copy()
         if "signature" in verification_payload:
             del verification_payload["signature"]
 
