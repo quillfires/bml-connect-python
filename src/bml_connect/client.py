@@ -208,7 +208,9 @@ class SignatureUtils:
             try:
                 method = SignMethod(method)
             except ValueError:
-                logger.warning("Invalid sign method '%s', defaulting to SHA1", original_value)
+                logger.warning(
+                    "Invalid sign method '%s', defaulting to SHA1", original_value
+                )
                 method = SignMethod.SHA1
 
         amount = data.get("amount")
@@ -558,9 +560,7 @@ class BMLConnect:
 
     def __enter__(self) -> "BMLConnect":
         if isinstance(self.client, AsyncClient):
-            raise TypeError(
-                "Use 'async with' for async_mode=True clients"
-            )
+            raise TypeError("Use 'async with' for async_mode=True clients")
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
