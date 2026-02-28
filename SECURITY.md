@@ -5,10 +5,10 @@
 Only the latest release of `bml-connect-python` receives security fixes.
 If you are on an older version, please upgrade before reporting.
 
-| Version | Supported |
-|---|---|
-| Latest (1.x) | ✅ |
-| Older versions | ❌ |
+| Version        | Supported |
+| -------------- | --------- |
+| Latest (2.x)   | ✅        |
+| Older versions | ❌        |
 
 ---
 

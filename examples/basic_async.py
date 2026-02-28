@@ -2,7 +2,7 @@
 Basic Asynchronous Usage Example
 ==================================
 
-This example shows how to use the BML Connect SDK in asynchronous mode.
+Demonstrates the V2 BML Connect SDK using async/await.
 """
 
 import asyncio
@@ -10,50 +10,54 @@ import asyncio
 from bml_connect import BMLConnect, Environment
 
 
-async def main():
-    # Use as an async context manager — session is closed automatically on exit
+async def main() -> None:
     async with BMLConnect(
         api_key="your_api_key_here",
-        app_id="your_app_id_here",
         environment=Environment.SANDBOX,
         async_mode=True,
     ) as client:
-        # Create a transaction
-        transaction = await client.transactions.create_transaction(
+
+        # Register webhook
+        hook = await client.webhooks.create("https://yourapp.com/bml-webhook")
+        print(f"Webhook registered: {hook.id}")
+
+        # Create V2 transaction
+        txn = await client.transactions.create(
             {
-                "amount": 2000,  # 20.00 MVR
-                "currency": "MVR",
-                "provider": "wechat",
-                "redirectUrl": "https://yourstore.com/success",
+                "redirectUrl": "https://yourapp.com/thanks",
+                "localId": "INV-ASYNC-001",
+                "order": {
+                    "shopId": "YOUR_SHOP_ID",
+                    "products": [{"productId": "PROD_ID", "numberOfItems": 1}],
+                },
+                # Optional: set an expiry date
+                "expires": "2026-12-31T23:59:59.000Z",
             }
         )
+        print(f"Created transaction {txn.id}: {txn.url}")
 
-        print(f"Created transaction: {transaction.transaction_id}")
-        print(
-            f"QR Code URL: {transaction.qr_code.url if transaction.qr_code else 'N/A'}"
-        )
+        # Share payment link
+        await client.transactions.send_sms(txn.id, "9609601234")
+        await client.transactions.send_email(txn.id, ["alice@example.com", "bob@example.com"])
 
-        # Get transaction details
-        details = await client.transactions.get_transaction(transaction.transaction_id)
-        print(f"Current status: {details.state.value if details.state else 'N/A'}")
+        # Fetch details
+        fetched = await client.transactions.get(txn.id)
+        print(f"State: {fetched.state.value if fetched.state else 'N/A'}")
 
-        # Cancel a transaction
-        print("\nCancelling transaction...")
-        cancelled = await client.transactions.cancel_transaction(
-            transaction.transaction_id
-        )
-        print(
-            f"Cancelled status: {cancelled.state.value if cancelled.state else 'N/A'}"
-        )
+        # List shops and their products
+        shops = await client.shops.list()
+        for shop in shops:
+            print(f"\nShop: {shop.name} ({shop.id})")
+            products = await client.shops.list_products(shop.id)
+            for p in products:
+                print(f"  Product: {p.name} — {p.price} {p.currency}")
 
-        # List transactions with filters
-        print("\nListing confirmed transactions...")
-        result = await client.transactions.list_transactions(
-            page=1,
-            per_page=5,
-            state="CONFIRMED",
-        )
-        print(f"Found {result.count} confirmed transactions")
+        # Customers
+        customers = await client.customers.list()
+        print(f"\n{len(customers)} customers on account.")
+
+        # Cleanup
+        await client.webhooks.delete("https://yourapp.com/bml-webhook")
 
 
 if __name__ == "__main__":

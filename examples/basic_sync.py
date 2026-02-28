@@ -2,51 +2,84 @@
 Basic Synchronous Usage Example
 ================================
 
-This example shows how to use the BML Connect SDK in synchronous mode.
+Demonstrates the V2 BML Connect SDK using the context-manager pattern.
 """
 
 from bml_connect import BMLConnect, Environment
 
-# Use as a context manager — session is closed automatically on exit
-with BMLConnect(
-    api_key="your_api_key_here",
-    app_id="your_app_id_here",
-    environment=Environment.SANDBOX,
-) as client:
-    # Create a transaction
-    transaction = client.transactions.create_transaction(
+# ---------------------------------------------------------------------------
+# Initialise
+# ---------------------------------------------------------------------------
+client = BMLConnect(api_key="your_api_key_here", environment=Environment.SANDBOX)
+
+with client:
+    # -----------------------------------------------------------------------
+    # 1. Register a webhook URL so BML notifies you of transaction updates
+    # -----------------------------------------------------------------------
+    hook = client.webhooks.create("https://yourapp.com/bml-webhook")
+    print(f"Webhook registered: {hook.id} → {hook.hook_url}")
+
+    # -----------------------------------------------------------------------
+    # 2. Create a V2 transaction (no signature required)
+    # -----------------------------------------------------------------------
+    txn = client.transactions.create(
         {
-            "amount": 1500,  # 15.00 MVR
-            "currency": "MVR",
-            "provider": "alipay",
-            "redirectUrl": "https://yourstore.com/success",
-            "localId": "order_12345",
-            "customerReference": "Customer #789",
+            "redirectUrl": "https://yourapp.com/thanks",
+            "localId": "INV-001",
+            "customerReference": "Order #42",
+            "order": {
+                "shopId": "YOUR_SHOP_ID",
+                "products": [
+                    {"productId": "YOUR_PRODUCT_ID", "numberOfItems": 2},
+                ],
+            },
         }
     )
 
-    print("Transaction created successfully!")
-    print(f"ID: {transaction.transaction_id}")
-    print(f"Amount: {transaction.amount / 100:.2f} {transaction.currency}")
-    print(f"Status: {transaction.state.value if transaction.state else 'N/A'}")
-    print(f"Payment URL: {transaction.url}")
+    print(f"\nTransaction created!")
+    print(f"  ID        : {txn.id}")
+    print(f"  Amount    : {txn.amount} {txn.currency}")
+    print(f"  State     : {txn.state.value if txn.state else 'N/A'}")
+    print(f"  Pay URL   : {txn.url}")
+    print(f"  Short URL : {txn.short_url}")
 
-    # Retrieve the same transaction
-    print("\nFetching transaction details...")
-    fetched = client.transactions.get_transaction(transaction.transaction_id)
-    print(f"Fetched status: {fetched.state.value if fetched.state else 'N/A'}")
+    # -----------------------------------------------------------------------
+    # 3. Share the payment link with the customer
+    # -----------------------------------------------------------------------
+    updated_sms = client.transactions.send_sms(txn.id, "9609601234")
+    print(f"\nSMS sent. Last shared: {updated_sms.last_shared}")
 
-    # Cancel a transaction
-    print("\nCancelling transaction...")
-    cancelled = client.transactions.cancel_transaction(transaction.transaction_id)
-    print(f"Cancelled status: {cancelled.state.value if cancelled.state else 'N/A'}")
+    updated_email = client.transactions.send_email(txn.id, "customer@example.com")
+    print(f"Email sent. Last shared: {updated_email.last_shared}")
 
-    # List recent transactions
-    print("\nListing recent transactions...")
-    result = client.transactions.list_transactions(page=1, per_page=3)
-    print(f"Found {result.count} transactions (showing first 3):")
-    for txn in result.items:
-        state = txn.state.value if txn.state else "N/A"
-        print(
-            f"  - {txn.transaction_id}: {txn.amount / 100:.2f} {txn.currency} ({state})"
-        )
+    # -----------------------------------------------------------------------
+    # 4. Retrieve and update a transaction
+    # -----------------------------------------------------------------------
+    fetched = client.transactions.get(txn.id)
+    print(f"\nFetched state: {fetched.state.value if fetched.state else 'N/A'}")
+
+    patched = client.transactions.update(
+        txn.id,
+        customer_reference="Booking #99",
+        local_data='{"reservationId": "RES-001"}',
+        pnr="ABC123",
+    )
+    print(f"Updated customer_reference: {patched.customer_reference}")
+
+    # -----------------------------------------------------------------------
+    # 5. Shop management
+    # -----------------------------------------------------------------------
+    shops = client.shops.list()
+    print(f"\nShops: {[s.name for s in shops]}")
+
+    # -----------------------------------------------------------------------
+    # 6. Customer management
+    # -----------------------------------------------------------------------
+    customers = client.customers.list()
+    print(f"Customers: {len(customers)}")
+
+    # -----------------------------------------------------------------------
+    # 7. Unregister webhook when no longer needed
+    # -----------------------------------------------------------------------
+    client.webhooks.delete("https://yourapp.com/bml-webhook")
+    print("\nWebhook removed.")
