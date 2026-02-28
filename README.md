@@ -37,14 +37,14 @@ Compatible with all Python frameworks including Django, Flask, FastAPI, and Sani
 
 ## Features
 
-- **🔄 Sync/Async Support** — Choose your style; every resource has both a sync and an `async/await` variant
-- **🎯 Full API Coverage** — Transactions (v2), webhooks registration, SMS/email sharing, shops, products, categories, taxes, order fields, custom fees, customers, tokens
-- **🪝 Webhook Registration** — Register your endpoint URL directly in BML's backend so you receive push notifications
-- **📝 Type Annotations** — Full type hints throughout for a great IDE experience
-- **🛡️ Error Handling** — Structured exception hierarchy for easy debugging
-- **🔐 Dual Webhook Verification** — HMAC-SHA256 (current) and legacy SHA-1/MD5 (backward compat)
-- **🚀 Framework Agnostic** — Works with Django, Flask, FastAPI, Sanic, or plain scripts
-- **📄 MIT Licensed** — Open source and free to use
+- **🔄 Sync/Async Support** - Choose your style; every resource has both a sync and an `async/await` variant
+- **🎯 Full API Coverage** - Transactions (v2), webhooks registration, SMS/email sharing, shops, products, categories, taxes, order fields, custom fees, customers, tokens
+- **🪝 Webhook Registration** - Register your endpoint URL directly in BML's backend so you receive push notifications
+- **📝 Type Annotations** - Full type hints throughout for a great IDE experience
+- **🛡️ Error Handling** - Structured exception hierarchy for easy debugging
+- **🔐 Dual Webhook Verification** - HMAC-SHA256 (current) and legacy SHA-1/MD5 (backward compat)
+- **🚀 Framework Agnostic** - Works with Django, Flask, FastAPI, Sanic, or plain scripts
+- **📄 MIT Licensed** - Open source and free to use
 
 ---
 
@@ -70,7 +70,7 @@ with BMLConnect(api_key="your_api_key", environment=Environment.SANDBOX) as clie
     # 1. Register your webhook URL so BML notifies you of payment updates
     client.webhooks.create("https://yourapp.com/bml-webhook")
 
-    # 2. Create a transaction (V2 — no signature needed)
+    # 2. Create a transaction (V2 - no signature needed)
     txn = client.transactions.create({
         "redirectUrl": "https://yourapp.com/thanks",
         "localId": "INV-001",
@@ -145,7 +145,7 @@ BML signs every outgoing webhook with three HTTP headers:
 | `X-Signature-Timestamp` | Unix timestamp of the request                            |
 | `X-Signature`           | `SHA-256("{nonce}{timestamp}{api_key}")` as a hex string |
 
-Reconstruct the same string, hash it, and compare — the SDK does this for you:
+Reconstruct the same string, hash it, and compare - the SDK does this for you:
 
 ```python
 # From any headers dict (Flask, Django, Sanic, plain dicts…)
@@ -173,7 +173,7 @@ is_valid = SignatureUtils.verify_webhook_headers(request.headers, api_key)
 **Legacy `originalSignature` (deprecated)**
 
 Older v1 webhook payloads included an `originalSignature` field in the JSON body
-instead of headers. BML no longer recommends relying on this alone — always
+instead of headers. BML no longer recommends relying on this alone - always
 query the API for the authoritative transaction state. The SDK still supports it
 for backward compatibility:
 
@@ -192,11 +192,11 @@ txn = client.transactions.get(payload["id"])
 
 ## Transactions
 
-### Create (V2 — recommended)
+### Create (V2 - recommended)
 
 The V2 endpoint (`POST /public/v2/transactions`) supports two modes.
 
-**Order-based** — reference products from a shop:
+**Order-based** - reference products from a shop:
 
 ```python
 txn = client.transactions.create({
@@ -221,7 +221,7 @@ txn = client.transactions.create({
 })
 ```
 
-**With customer creation** — create a customer record inline:
+**With customer creation** - create a customer record inline:
 
 ```python
 txn = client.transactions.create({
@@ -240,7 +240,7 @@ txn = client.transactions.create({
 })
 ```
 
-**With tokenisation** — for recurring or unscheduled payments:
+**With tokenisation** - for recurring or unscheduled payments:
 
 ```python
 txn = client.transactions.create({
@@ -292,10 +292,10 @@ for txn in page.items:
 Both methods are **rate-limited to once per minute** per transaction to prevent spam.
 
 ```python
-# SMS — phone number with country code, + prefix is optional
+# SMS - phone number with country code, + prefix is optional
 client.transactions.send_sms("TRANSACTION_ID", "9609601234")
 
-# Email — single address or a list
+# Email - single address or a list
 client.transactions.send_email("TRANSACTION_ID", "customer@example.com")
 client.transactions.send_email("TRANSACTION_ID", ["alice@example.com", "bob@example.com"])
 ```
@@ -430,14 +430,14 @@ companies = client.company.get()   # returns a list
 for co in companies:
     print(co.trading_name, co.enabled_currencies)
     for provider in co.payment_providers:
-        print(f"  {provider.value} — ecommerce={provider.ecommerce}")
+        print(f"  {provider.value} - ecommerce={provider.ecommerce}")
 ```
 
 ---
 
 ## Framework Integration
 
-### Flask — full webhook receiver
+### Flask - full webhook receiver
 
 ```python
 import os
@@ -472,7 +472,7 @@ def webhook():
     return jsonify({"status": "ok"})
 ```
 
-### FastAPI — async webhook receiver
+### FastAPI - async webhook receiver
 
 ```python
 import os
@@ -603,11 +603,11 @@ SignMethod.MD5    # legacy only
 
 ```
 BMLConnectError
-├── AuthenticationError   # 401 — invalid or missing API key
-├── ValidationError       # 400 — malformed request
-├── NotFoundError         # 404 — resource not found
-├── RateLimitError        # 429 — too many requests
-└── ServerError           # 5xx — BML server error
+├── AuthenticationError   # 401 - invalid or missing API key
+├── ValidationError       # 400 - malformed request
+├── NotFoundError         # 404 - resource not found
+├── RateLimitError        # 429 - too many requests
+└── ServerError           # 5xx - BML server error
 ```
 
 ```python
@@ -623,18 +623,18 @@ except BMLConnectError as e:
     print(f"[{e.code}] {e.message}  (HTTP {e.status_code})")
 ```
 
-### `SignatureUtils` — Webhook Verification
+### `SignatureUtils` - Webhook Verification
 
 ```python
 from bml_connect import SignatureUtils
 
-# Current — SHA-256 of nonce + timestamp + api_key (header-based)
+# Current - SHA-256 of nonce + timestamp + api_key (header-based)
 is_valid = SignatureUtils.verify_webhook_signature(nonce, timestamp, received_sig, api_key)
 
 # Convenience: pass the full headers dict directly
 is_valid = SignatureUtils.verify_webhook_headers(headers_dict, api_key)
 
-# Deprecated — MD5 originalSignature in JSON body (v1 payloads only)
+# Deprecated - MD5 originalSignature in JSON body (v1 payloads only)
 is_valid = SignatureUtils.verify_legacy_signature(payload_dict, original_sig, api_key)
 ```
 
@@ -672,7 +672,7 @@ transaction = client.transactions.create_transaction({
     ...
 })
 
-# After (v2.0) — no signature, no signMethod, no provider field at top level
+# After (v2.0) - no signature, no signMethod, no provider field at top level
 transaction = client.transactions.create({
     "redirectUrl": "https://yourapp.com/thanks",
     "localId": "INV-001",
@@ -753,7 +753,7 @@ Contributions are welcome! Please read [CONTRIBUTING](https://github.com/quillfi
 
 ## License
 
-MIT — see [LICENSE](https://github.com/quillfires/bml-connect-python/blob/main/LICENSE) for details.
+MIT - see [LICENSE](https://github.com/quillfires/bml-connect-python/blob/main/LICENSE) for details.
 
 ---
 
