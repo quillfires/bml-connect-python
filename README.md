@@ -9,7 +9,7 @@
 Python SDK for Bank of Maldives Connect API v2 with synchronous and asynchronous support.  
 Compatible with all Python frameworks including Django, Flask, FastAPI, and Sanic.
 
-> **v2.0.0** — full coverage of the BML Connect v2 API across all four integration methods: Redirect, Direct, Card-On-File Tokenization, and PCI Merchant Tokenization.
+> **v2.0.0** - full coverage of the BML Connect v2 API across all four integration methods: Redirect, Direct, Card-On-File Tokenization, and PCI Merchant Tokenization.
 
 ---
 
@@ -39,16 +39,16 @@ Compatible with all Python frameworks including Django, Flask, FastAPI, and Sani
 
 ## Features
 
-- **🔄 Sync/Async Support** — every resource has both sync and `async/await` variants
-- **🎯 Four Integration Methods** — Redirect, Direct (QR + card), Card-On-File, PCI Tokenization
-- **🪝 Webhook Registration** — register your endpoint directly in BML's backend
-- **🔔 Webhook Event Parsing** — `WebhookEvent` model for `NOTIFY_TRANSACTION_CHANGE` and `NOTIFY_TOKENISATION_STATUS`
-- **🔐 Webhook Verification** — SHA-256 header scheme with legacy MD5 fallback
-- **🔑 PCI Card Encryption** — `CardEncryption` utility for RSA-OAEP SHA-256 server-side card encryption
-- **📝 Type Annotations** — full type hints throughout
-- **🛡️ Error Handling** — structured exception hierarchy
-- **🚀 Framework Agnostic** — works with Django, Flask, FastAPI, Sanic, or plain scripts
-- **📄 MIT Licensed** — open source and free to use
+- **🔄 Sync/Async Support** - every resource has both sync and `async/await` variants
+- **🎯 Four Integration Methods** - Redirect, Direct (QR + card), Card-On-File, PCI Tokenization
+- **🪝 Webhook Registration** - register your endpoint directly in BML's backend
+- **🔔 Webhook Event Parsing** - `WebhookEvent` model for `NOTIFY_TRANSACTION_CHANGE` and `NOTIFY_TOKENISATION_STATUS`
+- **🔐 Webhook Verification** - SHA-256 header scheme with legacy MD5 fallback
+- **🔑 PCI Card Encryption** - `CardEncryption` utility for RSA-OAEP SHA-256 server-side card encryption
+- **📝 Type Annotations** - full type hints throughout
+- **🛡️ Error Handling** - structured exception hierarchy
+- **🚀 Framework Agnostic** - works with Django, Flask, FastAPI, Sanic, or plain scripts
+- **📄 MIT Licensed** - open source and free to use
 
 ---
 
@@ -76,7 +76,7 @@ All four methods use the same `POST /public/v2/transactions` endpoint. The paylo
 
 ### Redirect Method
 
-The easiest integration. BML hosts the payment page — you control branding via the Merchant Dashboard under **Settings → Branding**.
+The easiest integration. BML hosts the payment page - you control branding via the Merchant Dashboard under **Settings → Branding**.
 
 ```python
 from bml_connect import BMLConnect, Environment
@@ -97,10 +97,10 @@ with BMLConnect(api_key="sk_...", environment=Environment.PRODUCTION) as client:
     })
 
     print(txn.url)        # full payment page URL
-    print(txn.short_url)  # shortened URL — ideal for SMS and messaging apps
+    print(txn.short_url)  # shortened URL - ideal for SMS and messaging apps
 ```
 
-After payment, BML redirects back to `redirectUrl` and appends `transactionId`, `state`, and `signature` as query parameters. Always confirm the final state via the API — never rely solely on redirect parameters:
+After payment, BML redirects back to `redirectUrl` and appends `transactionId`, `state`, and `signature` as query parameters. Always confirm the final state via the API - never rely solely on redirect parameters:
 
 ```python
 txn = client.transactions.get("TRANSACTION_ID")
@@ -130,9 +130,9 @@ txn = client.transactions.create({
 | Scenario | How to configure |
 |---|---|
 | Let BML handle retries (default) | No extra fields needed |
-| Redirect on cancel/fail | Set `redirectUrl` — BML appends state, id, errors |
+| Redirect on cancel/fail | Set `redirectUrl` - BML appends state, id, errors |
 | No retries allowed | Add `"allowRetry": false` |
-| Merchant handles retries | Set `"paymentAttemptFailureUrl": "https://yourapp.com/checkout/123"` — transaction stays `QR_CODE_GENERATED` so it can be retried with the same ID |
+| Merchant handles retries | Set `"paymentAttemptFailureUrl": "https://yourapp.com/checkout/123"` - transaction stays `QR_CODE_GENERATED` so it can be retried with the same ID |
 
 ---
 
@@ -144,16 +144,16 @@ Your UI, your checkout experience. You handle displaying the payment interface.
 
 | Provider | Value | Response field |
 |---|---|---|
-| Domestic card (MPGS) | `mpgs` | `url` — redirect to secure card form |
-| International card | `debit_credit_card` | `url` — redirect to secure card form |
-| Alipay online | `alipay_online` | `url` — redirect |
-| Alipay in-person QR | `alipay` | `vendor_qr_code` — encode into QR image |
+| Domestic card (MPGS) | `mpgs` | `url` - redirect to secure card form |
+| International card | `debit_credit_card` | `url` - redirect to secure card form |
+| Alipay online | `alipay_online` | `url` - redirect |
+| Alipay in-person QR | `alipay` | `vendor_qr_code` - encode into QR image |
 | UnionPay QR | `unionpay` | `vendor_qr_code` |
 | WechatPay QR | `wechatpay` | `vendor_qr_code` |
 | BML MobilePay QR | `bml_mobilepay` | `vendor_qr_code` |
-| Cash | `cash` | — |
+| Cash | `cash` | - |
 
-**QR providers** — generate and display a QR code:
+**QR providers** - generate and display a QR code:
 
 ```python
 import qrcode
@@ -172,7 +172,7 @@ qr = qrcode.make(txn.vendor_qr_code)
 qr.save("payment_qr.png")
 ```
 
-**Card / online providers** — redirect customer to the secure form:
+**Card / online providers** - redirect customer to the secure form:
 
 ```python
 txn = client.transactions.create({
@@ -216,7 +216,7 @@ Use **polling** or **webhooks** to track payment status. See [Webhooks](#webhook
 
 Store a customer's card for future recurring or one-click charges. Only `mpgs` and `debit_credit_card` support tokenisation.
 
-#### Step 1 — Capture the card on the first transaction
+#### Step 1 - Capture the card on the first transaction
 
 You can create the customer and capture their card in **one call**:
 
@@ -263,7 +263,7 @@ txn = client.transactions.create({
 
 After the customer completes the payment, BML fires a `NOTIFY_TOKENISATION_STATUS` webhook confirming the card was stored.
 
-#### Step 2 — List stored tokens
+#### Step 2 - List stored tokens
 
 ```python
 tokens = client.customers.list_tokens("CUSTOMER_ID")
@@ -273,7 +273,7 @@ for t in tokens:
           "default" if t.default_token else "")
 ```
 
-#### Step 3 — Charge a stored token
+#### Step 3 - Charge a stored token
 
 First create a transaction for the customer, then charge it against their token:
 
@@ -285,21 +285,21 @@ txn = client.transactions.create({
     "customerId": "CUSTOMER_ID",
 })
 
-# Option 1 — specify token by ID (recommended)
+# Option 1 - specify token by ID (recommended)
 result = client.customers.charge({
     "customerId": "CUSTOMER_ID",
     "transactionId": txn.id,
     "tokenId": tokens[0].id,
 })
 
-# Option 2 — specify by raw token string
+# Option 2 - specify by raw token string
 result = client.customers.charge({
     "customerId": "CUSTOMER_ID",
     "transactionId": txn.id,
     "token": tokens[0].token,
 })
 
-# Option 3 — use default token (no token field)
+# Option 3 - use default token (no token field)
 result = client.customers.charge({
     "customerId": "CUSTOMER_ID",
     "transactionId": txn.id,
@@ -324,22 +324,22 @@ For PCI-approved merchants who capture card details directly. Requires a separat
 from bml_connect import BMLConnect, CardEncryption, Environment
 
 client = BMLConnect(
-    api_key="sk_your_private_key",    # private key — creates transactions
-    public_key="pk_your_public_key",  # public key — calls /public-client/* endpoints
+    api_key="sk_your_private_key",    # private key - creates transactions
+    public_key="pk_your_public_key",  # public key - calls /public-client/* endpoints
     environment=Environment.PRODUCTION,
 )
 ```
 
-#### Step 1 — Fetch the RSA encryption key
+#### Step 1 - Fetch the RSA encryption key
 
 ```python
-# Always fetch fresh — this key can rotate at any time
+# Always fetch fresh - this key can rotate at any time
 enc_key = client.public_client.get_tokens_public_key()
 print(enc_key.key_id)
 print(enc_key.pem)     # PEM-formatted public key ready for encryption
 ```
 
-#### Step 2 — Encrypt card data
+#### Step 2 - Encrypt card data
 
 ```python
 card_b64 = CardEncryption.encrypt(enc_key.pem, {
@@ -360,7 +360,7 @@ from bml_connect import CardEncryption
 CardEncryption.validate_card_payload({...})   # raises ValueError if invalid
 ```
 
-#### Step 3 — Submit encrypted card data
+#### Step 3 - Submit encrypted card data
 
 ```python
 result = client.public_client.add_card(
@@ -378,7 +378,7 @@ redirect_to(result.next_action.url)
 client_side_token_id = result.next_action.client_side_token_id
 ```
 
-#### Step 4 — Handle the callback
+#### Step 4 - Handle the callback
 
 BML redirects to your `redirect` URL with query parameters:
 
@@ -390,7 +390,7 @@ https://yourapp.com/tokenisation-callback?tokenId=<id>&clientSideTokenId=<id>&cu
 https://yourapp.com/tokenisation-callback?clientSideTokenId=<id>&customerId=<id>&status=TOKENISATION_FAILURE
 ```
 
-The `tokenId` on success is the **Customer Token ID** — use this for charging.
+The `tokenId` on success is the **Customer Token ID** - use this for charging.
 
 ```python
 # Flask callback handler example
@@ -403,11 +403,11 @@ def tokenisation_callback():
         # Store token_id in your database, then charge it when needed
         pass
     else:
-        # Handle failure — prompt customer to re-enter card details
+        # Handle failure - prompt customer to re-enter card details
         pass
 ```
 
-> Always implement the async webhook listener too — the customer may close the browser before the redirect completes.
+> Always implement the async webhook listener too - the customer may close the browser before the redirect completes.
 
 ---
 
@@ -458,7 +458,7 @@ if event.event_type == WebhookEventType.NOTIFY_TRANSACTION_CHANGE:
 elif event.event_type == WebhookEventType.NOTIFY_TOKENISATION_STATUS:
     if event.tokenisation_status == TokenisationStatus.SUCCESS:
         tokens = client.customers.list_tokens(event.customer_id)
-        print(f"Card stored — {len(tokens)} token(s) on file")
+        print(f"Card stored - {len(tokens)} token(s) on file")
     else:
         print(f"Tokenisation failed for customer {event.customer_id}")
 ```
@@ -483,12 +483,12 @@ txn = client.transactions.get(payload["transactionId"])
 | State | Description |
 |---|---|
 | `INITIATED` | Payment created; QR asset not yet ready |
-| `QR_CODE_GENERATED` | Pending — awaiting customer payment action |
+| `QR_CODE_GENERATED` | Pending - awaiting customer payment action |
 | `CONFIRMED` | Payment completed successfully |
 | `CANCELLED` | User cancelled or link timed out |
-| `FAILED` | Permanently failed — cannot be retried |
+| `FAILED` | Permanently failed - cannot be retried |
 | `EXPIRED` | Payment link expired |
-| `VOIDED` | Payment reversed — excluded from settlements |
+| `VOIDED` | Payment reversed - excluded from settlements |
 | `AUTHORIZED` | Pre-auth approved; funds not yet captured |
 | `REFUND_REQUESTED` | Refund requested, under review |
 | `REFUNDED` | Refund completed |
@@ -516,10 +516,10 @@ elif txn.state == TransactionState.AUTHORIZED:
 Both methods are **rate-limited to once per minute** per transaction.
 
 ```python
-# SMS — country code prefix is optional
+# SMS - country code prefix is optional
 client.transactions.send_sms("TRANSACTION_ID", "9609601234")
 
-# Email — single address or a list
+# Email - single address or a list
 client.transactions.send_email("TRANSACTION_ID", "customer@example.com")
 client.transactions.send_email("TRANSACTION_ID", ["alice@example.com", "bob@example.com"])
 ```
@@ -528,7 +528,7 @@ Use `txn.short_url` (instead of `txn.url`) when sharing in SMS or messaging apps
 
 ---
 
-## Transactions — Additional Operations
+## Transactions - Additional Operations
 
 ### Update
 
@@ -654,14 +654,14 @@ companies = client.company.get()
 for co in companies:
     print(co.trading_name, co.enabled_currencies)
     for provider in co.payment_providers:
-        print(f"  {provider.value} — ecommerce={provider.ecommerce}")
+        print(f"  {provider.value} - ecommerce={provider.ecommerce}")
 ```
 
 ---
 
 ## Framework Integration
 
-### Flask — full webhook receiver
+### Flask - full webhook receiver
 
 ```python
 import os
@@ -694,7 +694,7 @@ def webhook():
     return jsonify({"status": "ok"})
 ```
 
-### FastAPI — async webhook receiver
+### FastAPI - async webhook receiver
 
 ```python
 import os
@@ -771,7 +771,7 @@ async def webhook(request):
 | `api_key` | `str` | required | Private API key (`sk_...`) from BML merchant portal |
 | `environment` | `Environment` or `str` | `PRODUCTION` | `Environment.SANDBOX` or `Environment.PRODUCTION` |
 | `async_mode` | `bool` | `False` | Enable async/await mode |
-| `public_key` | `str` | `None` | Public application key (`pk_...`) — required for PCI Merchant Tokenization only. Must be from the same app as `api_key`. |
+| `public_key` | `str` | `None` | Public application key (`pk_...`) - required for PCI Merchant Tokenization only. Must be from the same app as `api_key`. |
 
 ### Resources
 
@@ -782,14 +782,14 @@ async def webhook(request):
 | `client.transactions` | Create (all four methods), retrieve, update, SMS/email share |
 | `client.shops` | Shops, products, categories, taxes, order fields, custom fees |
 | `client.customers` | Customer CRUD, token management, charge stored tokens |
-| `client.public_client` | PCI Tokenization — fetch RSA key, submit encrypted card data. `None` if `public_key` not provided. |
+| `client.public_client` | PCI Tokenization - fetch RSA key, submit encrypted card data. `None` if `public_key` not provided. |
 
 ### Models
 
 | Class | Description |
 |---|---|
-| `Transaction` | Full transaction record — all V2 fields |
-| `WebhookEvent` | Parsed webhook notification — `NOTIFY_TRANSACTION_CHANGE` or `NOTIFY_TOKENISATION_STATUS` |
+| `Transaction` | Full transaction record - all V2 fields |
+| `WebhookEvent` | Parsed webhook notification - `NOTIFY_TRANSACTION_CHANGE` or `NOTIFY_TOKENISATION_STATUS` |
 | `Webhook` | Registered webhook record |
 | `Company` | Merchant company details |
 | `PaymentProvider` | Provider info within a company |
@@ -804,7 +804,7 @@ async def webhook(request):
 | `QRCode` | QR code URL/image |
 | `PaginatedResponse` | Paginated transaction list |
 | `TokensPublicKey` | RSA encryption key for PCI tokenization |
-| `ClientTokenResponse` | Response from `POST /public-client/tokens` — contains 3DS redirect URL |
+| `ClientTokenResponse` | Response from `POST /public-client/tokens` - contains 3DS redirect URL |
 
 ### Enums
 
@@ -845,11 +845,11 @@ TokenisationStatus.FAILURE   # TOKENISATION_FAILURE
 
 ```
 BMLConnectError
-├── AuthenticationError   # 401 — invalid or missing API key
-├── ValidationError       # 400 — malformed request
-├── NotFoundError         # 404 — resource not found
-├── RateLimitError        # 429 — too many requests (SMS/email: once/min)
-└── ServerError           # 5xx — BML server error
+├── AuthenticationError   # 401 - invalid or missing API key
+├── ValidationError       # 400 - malformed request
+├── NotFoundError         # 404 - resource not found
+├── RateLimitError        # 429 - too many requests (SMS/email: once/min)
+└── ServerError           # 5xx - BML server error
 ```
 
 ```python
@@ -867,20 +867,20 @@ except BMLConnectError as e:
     print(f"[{e.code}] {e.message}  (HTTP {e.status_code})")
 ```
 
-### `SignatureUtils` — Webhook Verification
+### `SignatureUtils` - Webhook Verification
 
 ```python
 from bml_connect import SignatureUtils
 
-# Current — SHA-256 of nonce + timestamp + api_key
+# Current - SHA-256 of nonce + timestamp + api_key
 is_valid = SignatureUtils.verify_webhook_signature(nonce, timestamp, received_sig, api_key)
 is_valid = SignatureUtils.verify_webhook_headers(headers_dict, api_key)
 
-# Deprecated — MD5 originalSignature in JSON body (v1 payloads only)
+# Deprecated - MD5 originalSignature in JSON body (v1 payloads only)
 is_valid = SignatureUtils.verify_legacy_signature(payload_dict, original_sig, api_key)
 ```
 
-### `CardEncryption` — PCI Card Encryption
+### `CardEncryption` - PCI Card Encryption
 
 ```python
 from bml_connect import CardEncryption
@@ -893,7 +893,7 @@ CardEncryption.validate_card_payload({
     "cardExpiryYear": 29,
 })
 
-# Encrypt — returns Base64 RSA-OAEP SHA-256 ciphertext
+# Encrypt - returns Base64 RSA-OAEP SHA-256 ciphertext
 card_b64 = CardEncryption.encrypt(enc_key.pem, {
     "cardNumberRaw": "4111111111111111",
     "cardVDRaw": "123",
@@ -955,7 +955,7 @@ bml-connect-python/
 ├── examples/
 │   ├── basic_sync.py
 │   ├── basic_async.py
-│   ├── direct_method.py        # Direct Method — QR and card
+│   ├── direct_method.py        # Direct Method - QR and card
 │   ├── card_on_file.py         # Card-On-File tokenization + recurring charge
 │   ├── pci_tokenization.py     # PCI Merchant Tokenization
 │   ├── webhook_flask.py
@@ -1008,7 +1008,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT - see [LICENSE](LICENSE) for details.
 
 ---
 
