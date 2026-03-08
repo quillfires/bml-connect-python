@@ -35,6 +35,7 @@ import logging
 from typing import Any, Dict, Optional, Union
 
 from .exceptions import ValidationError
+from .models import SignMethod
 
 logger = logging.getLogger("bml_connect")
 
@@ -139,7 +140,7 @@ class SignatureUtils:
             # Works with any framework that exposes headers as a dict
             is_valid = SignatureUtils.verify_webhook_headers(request.headers, API_KEY)
         """
-        nonce = headers.get(nonce_header, "")
+        nonce     = headers.get(nonce_header, "")
         timestamp = headers.get(timestamp_header, "")
         signature = headers.get(signature_header, "")
 
@@ -147,18 +148,13 @@ class SignatureUtils:
             logger.warning(
                 "verify_webhook_headers: one or more signature headers are missing "
                 "(%s=%r, %s=%r, %s=%r)",
-                nonce_header,
-                nonce,
-                timestamp_header,
-                timestamp,
-                signature_header,
-                signature,
+                nonce_header, nonce,
+                timestamp_header, timestamp,
+                signature_header, signature,
             )
             return False
 
-        return SignatureUtils.verify_webhook_signature(
-            nonce, timestamp, signature, api_key
-        )
+        return SignatureUtils.verify_webhook_signature(nonce, timestamp, signature, api_key)
 
     # ------------------------------------------------------------------
     # Deprecated - MD5 / originalSignature (v1 webhook payloads)
@@ -190,16 +186,14 @@ class SignatureUtils:
         Returns:
             ``True`` if the signature matches.
         """
-        amount = data.get("amount")
+        amount   = data.get("amount")
         currency = data.get("currency")
 
         if not amount or not currency:
-            raise ValueError(
-                "amount and currency are required for legacy signature verification"
-            )
+            raise ValueError("amount and currency are required for legacy signature verification")
 
         sign_string = f"amount={amount}&currency={currency}&apiKey={api_key}"
-        calculated = base64.b64encode(
+        calculated  = base64.b64encode(
             hashlib.md5(sign_string.encode("utf-8")).digest()
         ).decode("utf-8")
 
@@ -236,13 +230,9 @@ class SignatureUtils:
         assert isinstance(payload, dict)
         original_signature = payload.get("originalSignature")
         if not original_signature:
-            raise ValidationError(
-                "Missing 'originalSignature' field in webhook payload"
-            )
+            raise ValidationError("Missing 'originalSignature' field in webhook payload")
 
-        return SignatureUtils.verify_legacy_signature(
-            payload, original_signature, api_key
-        )
+        return SignatureUtils.verify_legacy_signature(payload, original_signature, api_key)
 
     # ------------------------------------------------------------------
     # Removed in v2 - generate_legacy_signature / generate_signature

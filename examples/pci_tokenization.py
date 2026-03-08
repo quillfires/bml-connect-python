@@ -18,7 +18,7 @@ Flow:
     **same app** in the BML merchant dashboard.  Do not mix keys across apps.
 
 Requirements:
-    pip install bml-connect-python cryptography flask
+    pip install bml-connect-python flask
 
 Run:
     BML_API_KEY=sk_... BML_PUBLIC_KEY=pk_... flask --app pci_tokenization run --port 5002
@@ -107,10 +107,7 @@ def tokenise_card():
     enc_key = client.public_client.get_tokens_public_key()
 
     # Encrypt card data
-    try:
-        card_b64 = CardEncryption.encrypt(enc_key.pem, card_payload)
-    except ImportError as exc:
-        return jsonify({"error": str(exc)}), 500
+    card_b64 = CardEncryption.encrypt(enc_key.pem, card_payload)
 
     # Submit to BML
     result = client.public_client.add_card(

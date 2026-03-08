@@ -19,7 +19,6 @@ logger = logging.getLogger("bml_connect")
 # Enums
 # ---------------------------------------------------------------------------
 
-
 class Environment(Enum):
     SANDBOX = "sandbox"
     PRODUCTION = "production"
@@ -35,32 +34,30 @@ class Environment(Enum):
 class TransactionState(Enum):
     """All possible states a BML Connect transaction can be in."""
 
-    INITIATED = "INITIATED"  # Created; QR asset not yet ready
-    CREATED = "CREATED"  # Legacy alias for INITIATED
+    INITIATED = "INITIATED"             # Created; QR asset not yet ready
+    CREATED = "CREATED"                 # Legacy alias for INITIATED
     QR_CODE_GENERATED = "QR_CODE_GENERATED"  # Pending, awaiting customer action
-    CONFIRMED = "CONFIRMED"  # Payment completed
-    CANCELLED = "CANCELLED"  # User cancelled or timed out
-    FAILED = "FAILED"  # Permanently failed
-    EXPIRED = "EXPIRED"  # Link expired
-    VOIDED = "VOIDED"  # Payment reversed
+    CONFIRMED = "CONFIRMED"             # Payment completed
+    CANCELLED = "CANCELLED"             # User cancelled or timed out
+    FAILED = "FAILED"                   # Permanently failed
+    EXPIRED = "EXPIRED"                 # Link expired
+    VOIDED = "VOIDED"                   # Payment reversed
     REFUND_REQUESTED = "REFUND_REQUESTED"  # Refund under review
-    REFUNDED = "REFUNDED"  # Refund completed
-    AUTHORIZED = "AUTHORIZED"  # Pre-auth approved, not yet captured
+    REFUNDED = "REFUNDED"               # Refund completed
+    AUTHORIZED = "AUTHORIZED"           # Pre-auth approved, not yet captured
 
 
 class Provider(Enum):
     """Payment provider values for use in transaction creation."""
 
-    MPGS = "mpgs"  # Domestic card (supports tokenisation)
-    DEBIT_CREDIT_CARD = (
-        "debit_credit_card"  # International card (supports tokenisation)
-    )
-    ALIPAY = "alipay"  # Alipay in-person QR
-    ALIPAY_ONLINE = "alipay_online"  # Alipay online / e-commerce
-    UNIONPAY = "unionpay"  # UnionPay QR
-    WECHATPAY = "wechatpay"  # WechatPay QR
-    BML_MOBILEPAY = "bml_mobilepay"  # BML MobilePay QR
-    CASH = "cash"  # Cash
+    MPGS = "mpgs"                       # Domestic card (supports tokenisation)
+    DEBIT_CREDIT_CARD = "debit_credit_card"  # International card (supports tokenisation)
+    ALIPAY = "alipay"                   # Alipay in-person QR
+    ALIPAY_ONLINE = "alipay_online"     # Alipay online / e-commerce
+    UNIONPAY = "unionpay"               # UnionPay QR
+    WECHATPAY = "wechatpay"             # WechatPay QR
+    BML_MOBILEPAY = "bml_mobilepay"     # BML MobilePay QR
+    CASH = "cash"                       # Cash
 
     @classmethod
     def _missing_(cls, value: object) -> Optional["Provider"]:
@@ -69,7 +66,6 @@ class Provider(Enum):
 
 class WebhookEventType(Enum):
     """Event types carried in BML webhook notification payloads."""
-
     NOTIFY_TRANSACTION_CHANGE = "NOTIFY_TRANSACTION_CHANGE"
     NOTIFY_TOKENISATION_STATUS = "NOTIFY_TOKENISATION_STATUS"
 
@@ -89,7 +85,6 @@ class TokenisationStatus(Enum):
 
 class SignMethod(Enum):
     """Legacy signature methods - no longer used for V2 transactions."""
-
     SHA1 = "sha1"
     MD5 = "md5"
 
@@ -105,7 +100,6 @@ class SignMethod(Enum):
 # ---------------------------------------------------------------------------
 # Core transaction model
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class QRCode:
@@ -129,7 +123,7 @@ class Transaction:
 
     # Core identifiers
     id: Optional[str] = None
-    transaction_id: Optional[str] = None  # backward-compat alias for id
+    transaction_id: Optional[str] = None       # backward-compat alias for id
     local_id: Optional[str] = None
     external_id: Optional[str] = None
     external_source: Optional[str] = None
@@ -138,8 +132,8 @@ class Transaction:
     # Financial - amounts in cents / smallest currency unit
     amount: Optional[int] = None
     amount_fractional: Optional[float] = None  # human-readable decimal e.g. 10.00
-    amount_formatted: Optional[str] = None  # e.g. "USD 10.00"
-    amount_as_decimal: Optional[str] = None  # string e.g. "5.10"
+    amount_formatted: Optional[str] = None     # e.g. "USD 10.00"
+    amount_as_decimal: Optional[str] = None    # string e.g. "5.10"
     amount_before_discount: Optional[int] = None
     amount_discounted: Optional[int] = None
     available_balance: Optional[int] = None
@@ -168,7 +162,7 @@ class Transaction:
     url_hash: Optional[str] = None
     redirect_url: Optional[str] = None
     payment_attempt_failure_url: Optional[str] = None
-    vendor_qr_code: Optional[str] = None  # QR data string for direct QR providers
+    vendor_qr_code: Optional[str] = None       # QR data string for direct QR providers
     vendor_url: Optional[str] = None
     qr_code: Optional[QRCode] = None
 
@@ -342,9 +336,7 @@ class Transaction:
             has_error=data.get("hasError"),
             allow_retry=data.get("allowRetry"),
             can_refund_if_confirmed=data.get("canRefundIfConfirmed"),
-            can_incremental_partial_refund_if_confirmed=data.get(
-                "canIncrementalPartialRefundIfConfirmed"
-            ),
+            can_incremental_partial_refund_if_confirmed=data.get("canIncrementalPartialRefundIfConfirmed"),
             can_partial_refund_if_confirmed=data.get("canPartialRefundIfConfirmed"),
             can_void=data.get("canVoid"),
             on_hold=data.get("onHold"),
@@ -399,7 +391,6 @@ class PaginatedResponse:
 # ---------------------------------------------------------------------------
 # Webhook notification payload
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class WebhookEvent:
@@ -514,7 +505,6 @@ class WebhookEvent:
 # Webhook registration record
 # ---------------------------------------------------------------------------
 
-
 @dataclass
 class Webhook:
     id: Optional[str] = None
@@ -537,7 +527,6 @@ class Webhook:
 # ---------------------------------------------------------------------------
 # Company / Merchant
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class PaymentProvider:
@@ -595,7 +584,6 @@ class Company:
 # ---------------------------------------------------------------------------
 # Shop & related
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class Shop:
@@ -764,7 +752,6 @@ class CustomFee:
 # Customer & Tokens (Card-On-File)
 # ---------------------------------------------------------------------------
 
-
 @dataclass
 class Customer:
     id: Optional[str] = None
@@ -814,7 +801,6 @@ class CustomerToken:
     Pass ``id`` as ``tokenId`` or ``token`` as ``token`` to
     :meth:`.CustomersResource.charge`.
     """
-
     id: Optional[str] = None
     brand: Optional[str] = None
     provider: Optional[str] = None
@@ -860,7 +846,6 @@ class CustomerToken:
 # PCI Merchant Tokenization models
 # ---------------------------------------------------------------------------
 
-
 @dataclass
 class TokensPublicKey:
     """RSA public key for encrypting card data on the client side.
@@ -872,9 +857,8 @@ class TokensPublicKey:
         This key can be rotated at any time.  Always fetch the latest version
         immediately before encrypting - never cache it long-term.
     """
-
     key_id: str = ""
-    public_key: str = ""  # SPKI PEM-formatted RSA public key
+    public_key: str = ""    # SPKI PEM-formatted RSA public key
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "TokensPublicKey":
@@ -895,7 +879,6 @@ class TokensPublicKey:
 @dataclass
 class ClientTokenNextAction:
     """Next-action object returned after submitting encrypted card data."""
-
     url: str = ""
     client_side_token_id: str = ""
 
@@ -918,7 +901,6 @@ class ClientTokenResponse:
 
     ``next_action.client_side_token_id`` is **not** a payment token.
     """
-
     next_action: Optional[ClientTokenNextAction] = None
     _raw: Dict[str, Any] = field(default_factory=dict, repr=False, compare=False)
 

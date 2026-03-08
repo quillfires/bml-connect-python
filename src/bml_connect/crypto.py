@@ -8,11 +8,6 @@ Used by the server-side component of the PCI Merchant Tokenization flow.
 Card data is encrypted with the BML-provided RSA public key before being
 sent to ``POST /public-client/tokens``.
 
-.. note::
-    Requires the ``cryptography`` package::
-
-        pip install cryptography
-
 Usage::
 
     from bml_connect import BMLConnect, CardEncryption, Environment
@@ -51,26 +46,14 @@ from typing import Any, Dict
 
 
 class CardEncryption:
-    """RSA-OAEP encryption helpers for PCI Merchant Tokenization.
-
-    Requires the ``cryptography`` package (``pip install cryptography``).
-    This package is an optional dependency - it is only needed when using
-    the PCI Merchant Tokenization flow.
-    """
+    """RSA-OAEP encryption helpers for PCI Merchant Tokenization."""
 
     @staticmethod
     def _load_crypto() -> Any:
-        """Import cryptography lazily so it is optional for other flows."""
-        try:
-            from cryptography.hazmat.primitives import hashes, serialization
-            from cryptography.hazmat.primitives.asymmetric import padding
-
-            return hashes, serialization, padding
-        except ImportError as exc:
-            raise ImportError(
-                "The 'cryptography' package is required for PCI Merchant Tokenization.\n"
-                "Install it with:  pip install cryptography"
-            ) from exc
+        """Import cryptography primitives."""
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import padding
+        return hashes, serialization, padding
 
     @staticmethod
     def encrypt(public_key_pem: str, card_data: Dict[str, Any]) -> str:
@@ -100,7 +83,6 @@ class CardEncryption:
             ``cardData`` in ``POST /public-client/tokens``.
 
         Raises:
-            ImportError: If the ``cryptography`` package is not installed.
             ValueError: If the PEM key is malformed.
 
         Example::

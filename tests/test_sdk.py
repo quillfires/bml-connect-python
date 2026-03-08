@@ -16,9 +16,9 @@ from bml_connect import (
 from bml_connect.models import (
     Category,
     Company,
+    CustomFee,
     Customer,
     CustomerToken,
-    CustomFee,
     OrderField,
     Product,
     Shop,
@@ -27,10 +27,10 @@ from bml_connect.models import (
     TransactionState,
 )
 
+
 # ---------------------------------------------------------------------------
 # Environment / client initialisation
 # ---------------------------------------------------------------------------
-
 
 def test_invalid_environment_raises():
     with pytest.raises(ValueError, match="Invalid environment"):
@@ -44,9 +44,7 @@ def test_sync_client_creation():
 
 @pytest.mark.asyncio
 async def test_async_client_creation():
-    async with BMLConnect(
-        api_key="test", environment=Environment.SANDBOX, async_mode=True
-    ) as client:
+    async with BMLConnect(api_key="test", environment=Environment.SANDBOX, async_mode=True) as client:
         assert client.async_mode
 
 
@@ -59,60 +57,49 @@ def test_environment_urls():
 # Current webhook verification - SHA-256 nonce + timestamp
 # ---------------------------------------------------------------------------
 
-
 def test_verify_webhook_signature_valid():
     import hashlib
-
-    api_key = "my_api_key"
-    nonce = "abc123"
+    api_key   = "my_api_key"
+    nonce     = "abc123"
     timestamp = "1700000000"
     sign_string = f"{nonce}{timestamp}{api_key}"
     expected_sig = hashlib.sha256(sign_string.encode()).hexdigest()
 
-    assert SignatureUtils.verify_webhook_signature(
-        nonce, timestamp, expected_sig, api_key
-    )
+    assert SignatureUtils.verify_webhook_signature(nonce, timestamp, expected_sig, api_key)
 
 
 def test_verify_webhook_signature_tampered():
     import hashlib
-
-    api_key = "my_api_key"
-    nonce = "abc123"
+    api_key   = "my_api_key"
+    nonce     = "abc123"
     timestamp = "1700000000"
     sign_string = f"{nonce}{timestamp}{api_key}"
     sig = hashlib.sha256(sign_string.encode()).hexdigest()
 
     # Tamper: change nonce
-    assert not SignatureUtils.verify_webhook_signature(
-        "different_nonce", timestamp, sig, api_key
-    )
+    assert not SignatureUtils.verify_webhook_signature("different_nonce", timestamp, sig, api_key)
 
 
 def test_verify_webhook_signature_wrong_key():
     import hashlib
-
-    nonce = "abc123"
+    nonce     = "abc123"
     timestamp = "1700000000"
     sig = hashlib.sha256(f"{nonce}{timestamp}correct_key".encode()).hexdigest()
 
-    assert not SignatureUtils.verify_webhook_signature(
-        nonce, timestamp, sig, "wrong_key"
-    )
+    assert not SignatureUtils.verify_webhook_signature(nonce, timestamp, sig, "wrong_key")
 
 
 def test_verify_webhook_headers_valid():
     import hashlib
-
-    api_key = "my_api_key"
-    nonce = "nonce_xyz"
+    api_key   = "my_api_key"
+    nonce     = "nonce_xyz"
     timestamp = "1700000001"
     sig = hashlib.sha256(f"{nonce}{timestamp}{api_key}".encode()).hexdigest()
 
     headers = {
-        "X-Signature-Nonce": nonce,
+        "X-Signature-Nonce":     nonce,
         "X-Signature-Timestamp": timestamp,
-        "X-Signature": sig,
+        "X-Signature":           sig,
     }
     assert SignatureUtils.verify_webhook_headers(headers, api_key)
 
@@ -129,12 +116,10 @@ def test_verify_webhook_headers_missing_header():
 # Client-level verify_webhook_signature / verify_webhook_headers
 # ---------------------------------------------------------------------------
 
-
 def test_client_verify_webhook_signature():
     import hashlib
-
-    api_key = "my_api_key"
-    nonce = "n1"
+    api_key   = "my_api_key"
+    nonce     = "n1"
     timestamp = "t1"
     sig = hashlib.sha256(f"{nonce}{timestamp}{api_key}".encode()).hexdigest()
 
@@ -146,20 +131,17 @@ def test_client_verify_webhook_signature():
 
 def test_client_verify_webhook_headers():
     import hashlib
-
-    api_key = "my_api_key"
-    nonce = "n2"
+    api_key   = "my_api_key"
+    nonce     = "n2"
     timestamp = "t2"
     sig = hashlib.sha256(f"{nonce}{timestamp}{api_key}".encode()).hexdigest()
 
     client = BMLConnect(api_key=api_key, environment=Environment.SANDBOX)
-    assert client.verify_webhook_headers(
-        {
-            "X-Signature-Nonce": nonce,
-            "X-Signature-Timestamp": timestamp,
-            "X-Signature": sig,
-        }
-    )
+    assert client.verify_webhook_headers({
+        "X-Signature-Nonce":     nonce,
+        "X-Signature-Timestamp": timestamp,
+        "X-Signature":           sig,
+    })
     client.close()
 
 
@@ -167,13 +149,10 @@ def test_client_verify_webhook_headers():
 # Deprecated legacy verification - originalSignature (MD5)
 # ---------------------------------------------------------------------------
 
-
 def test_verify_legacy_signature_valid():
-    import base64
-    import hashlib
-
-    api_key = "key"
-    amount = 1000
+    import base64, hashlib
+    api_key  = "key"
+    amount   = 1000
     currency = "MVR"
     sign_str = f"amount={amount}&currency={currency}&apiKey={api_key}"
     original_sig = base64.b64encode(hashlib.md5(sign_str.encode()).digest()).decode()
@@ -184,9 +163,7 @@ def test_verify_legacy_signature_valid():
 
 
 def test_verify_legacy_signature_wrong_amount():
-    import base64
-    import hashlib
-
+    import base64, hashlib
     api_key = "key"
     sign_str = "amount=1000&currency=MVR&apiKey=key"
     sig = base64.b64encode(hashlib.md5(sign_str.encode()).digest()).decode()
@@ -203,11 +180,9 @@ def test_verify_legacy_signature_missing_fields():
 
 
 def test_client_verify_legacy_webhook_signature():
-    import base64
-    import hashlib
-
-    api_key = "key"
-    amount = 500
+    import base64, hashlib
+    api_key  = "key"
+    amount   = 500
     currency = "MVR"
     sign_str = f"amount={amount}&currency={currency}&apiKey={api_key}"
     orig_sig = base64.b64encode(hashlib.md5(sign_str.encode()).digest()).decode()
@@ -221,15 +196,12 @@ def test_client_verify_legacy_webhook_signature():
 def test_generate_legacy_signature_raises():
     """generate_legacy_signature was removed in v2 - must raise NotImplementedError."""
     with pytest.raises(NotImplementedError):
-        SignatureUtils.generate_legacy_signature(
-            {"amount": 100, "currency": "MVR"}, "key"
-        )
+        SignatureUtils.generate_legacy_signature({"amount": 100, "currency": "MVR"}, "key")
 
 
 # ---------------------------------------------------------------------------
 # Model: Transaction.from_dict
 # ---------------------------------------------------------------------------
-
 
 def test_transaction_from_dict_v2():
     data = {
@@ -261,7 +233,6 @@ def test_transaction_unknown_state_does_not_raise():
 # Model: Webhook.from_dict
 # ---------------------------------------------------------------------------
 
-
 def test_webhook_from_dict():
     data = {
         "id": "wh_1",
@@ -277,7 +248,6 @@ def test_webhook_from_dict():
 # ---------------------------------------------------------------------------
 # Model: Company.from_dict
 # ---------------------------------------------------------------------------
-
 
 def test_company_from_dict():
     data = {
@@ -298,7 +268,6 @@ def test_company_from_dict():
 # Model: Shop.from_dict
 # ---------------------------------------------------------------------------
 
-
 def test_shop_from_dict():
     data = {
         "id": "sh_1",
@@ -314,7 +283,6 @@ def test_shop_from_dict():
 # ---------------------------------------------------------------------------
 # Model: Customer / CustomerToken
 # ---------------------------------------------------------------------------
-
 
 def test_customer_from_dict():
     data = {
@@ -345,7 +313,6 @@ def test_customer_token_from_dict():
 # Context manager
 # ---------------------------------------------------------------------------
 
-
 def test_sync_context_manager():
     with BMLConnect(api_key="k", environment=Environment.SANDBOX) as client:
         assert client is not None
@@ -353,7 +320,5 @@ def test_sync_context_manager():
 
 @pytest.mark.asyncio
 async def test_async_context_manager():
-    async with BMLConnect(
-        api_key="k", environment=Environment.SANDBOX, async_mode=True
-    ) as client:
+    async with BMLConnect(api_key="k", environment=Environment.SANDBOX, async_mode=True) as client:
         assert client is not None

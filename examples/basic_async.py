@@ -50,7 +50,7 @@ async def main() -> None:
             print(f"\nShop: {shop.name} ({shop.id})")
             products = await client.shops.list_products(shop.id)
             for p in products:
-                print(f"  Product: {p.name} — {p.price} {p.currency}")
+                print(f"  Product: {p.name} - {p.price} {p.currency}")
 
         # Customers
         customers = await client.customers.list()

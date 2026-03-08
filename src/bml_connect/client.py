@@ -71,8 +71,9 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
+from . import __version__
 from .exceptions import ValidationError
 from .models import Environment
 from .resources import (
@@ -170,29 +171,17 @@ class BMLConnect:
 
         if async_mode:
             _t: AsyncTransport = AsyncTransport(api_key, self.environment)
-            self.company: Union[CompanyResource, AsyncCompanyResource] = (
-                AsyncCompanyResource(_t)
-            )
-            self.webhooks: Union[WebhooksResource, AsyncWebhooksResource] = (
-                AsyncWebhooksResource(_t)
-            )
-            self.transactions: Union[
-                TransactionsResource, AsyncTransactionsResource
-            ] = AsyncTransactionsResource(_t, api_key)
-            self.shops: Union[ShopsResource, AsyncShopsResource] = AsyncShopsResource(
-                _t
-            )
-            self.customers: Union[CustomersResource, AsyncCustomersResource] = (
-                AsyncCustomersResource(_t)
-            )
+            self.company: Union[CompanyResource, AsyncCompanyResource] = AsyncCompanyResource(_t)
+            self.webhooks: Union[WebhooksResource, AsyncWebhooksResource] = AsyncWebhooksResource(_t)
+            self.transactions: Union[TransactionsResource, AsyncTransactionsResource] = AsyncTransactionsResource(_t, api_key)
+            self.shops: Union[ShopsResource, AsyncShopsResource] = AsyncShopsResource(_t)
+            self.customers: Union[CustomersResource, AsyncCustomersResource] = AsyncCustomersResource(_t)
             self._async_transport = _t
             self._sync_transport: Optional[SyncTransport] = None
             # PCI Tokenization - requires public_key
             if public_key:
                 _pt: AsyncTransport = AsyncTransport(public_key, self.environment)
-                self.public_client: Union[
-                    PublicClientResource, AsyncPublicClientResource, None
-                ] = AsyncPublicClientResource(_pt)
+                self.public_client: Union[PublicClientResource, AsyncPublicClientResource, None] = AsyncPublicClientResource(_pt)
                 self._public_async_transport: Optional[AsyncTransport] = _pt
             else:
                 self.public_client = None
@@ -217,12 +206,23 @@ class BMLConnect:
                 self._public_sync_transport = None
             self._public_async_transport = None
 
-        logger.info(
-            "BMLConnect initialised (env=%s, async=%s, public_key=%s)",
-            self.environment.name,
-            async_mode,
-            bool(public_key),
-        )
+        logger.info("██████╗ ███╗   ███╗██╗      ")
+        logger.info("██╔══██╗████╗ ████║██║      ")
+        logger.info("██████╔╝██╔████╔██║██║      ")
+        logger.info("██╔══██╗██║╚██╔╝██║██║      ")
+        logger.info("██████╔╝██║ ╚═╝ ██║███████╗ ")
+        logger.info("╚═════╝ ╚═╝     ╚═╝╚══════╝ ")
+        logger.info(" ██████╗ ██████╗ ███╗   ██╗███╗   ██╗███████╗ ██████╗████████╗")
+        logger.info("██╔════╝██╔═══██╗████╗  ██║████╗  ██║██╔════╝██╔════╝╚══██╔══╝")
+        logger.info("██║     ██║   ██║██╔██╗ ██║██╔██╗ ██║█████╗  ██║        ██║   ")
+        logger.info("██║     ██║   ██║██║╚██╗██║██║╚██╗██║██╔══╝  ██║        ██║   ")
+        logger.info("╚██████╗╚██████╔╝██║ ╚████║██║ ╚████║███████╗╚██████╗   ██║   ")
+        logger.info(" ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═╝   ")
+        logger.info("Python SDK for Bank of Maldives Connect API")
+        logger.info("Author: Ali Fayaz (Quill) (quillfires)")
+        logger.info("Version: v%s", __version__)
+        logger.info("copyright (c) 2025-present Ali Fayaz (Quill) (quillfires)")
+        logger.info("env=%s  async=%s  public_key=%s", self.environment.name, async_mode, bool(public_key))
 
     # ------------------------------------------------------------------
     # Webhook signature verification helpers
@@ -328,9 +328,7 @@ class BMLConnect:
                 raise ValidationError("Invalid JSON payload") from exc
 
         assert isinstance(payload, dict)
-        return SignatureUtils.verify_legacy_signature(
-            payload, original_signature, self.api_key
-        )
+        return SignatureUtils.verify_legacy_signature(payload, original_signature, self.api_key)
 
     # ------------------------------------------------------------------
     # Context manager / cleanup
