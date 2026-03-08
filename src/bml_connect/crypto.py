@@ -53,6 +53,7 @@ class CardEncryption:
         """Import cryptography primitives."""
         from cryptography.hazmat.primitives import hashes, serialization
         from cryptography.hazmat.primitives.asymmetric import padding
+
         return hashes, serialization, padding
 
     @staticmethod

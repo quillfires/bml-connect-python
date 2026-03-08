@@ -16,9 +16,9 @@ from .models import (
     Category,
     ClientTokenResponse,
     Company,
-    CustomFee,
     Customer,
     CustomerToken,
+    CustomFee,
     OrderField,
     PaginatedResponse,
     Product,
@@ -31,10 +31,10 @@ from .models import (
 from .signature import SignatureUtils
 from .transport import AsyncTransport, SyncTransport
 
-
 # ---------------------------------------------------------------------------
 # Helper
 # ---------------------------------------------------------------------------
+
 
 def _coerce_list(value: Any) -> List[Any]:
     """Ensure a response value is always a list."""
@@ -48,6 +48,7 @@ def _coerce_list(value: Any) -> List[Any]:
 # ===========================================================================
 # Company
 # ===========================================================================
+
 
 class CompanyResource:
     def __init__(self, transport: SyncTransport) -> None:
@@ -72,6 +73,7 @@ class AsyncCompanyResource:
 # Webhooks
 # ===========================================================================
 
+
 class WebhooksResource:
     def __init__(self, transport: SyncTransport) -> None:
         self._t = transport
@@ -88,7 +90,9 @@ class WebhooksResource:
         Returns:
             :class:`.Webhook` with the created record.
         """
-        data = self._t.request("POST", "/public/webhooks", json_body={"hookUrl": hook_url})
+        data = self._t.request(
+            "POST", "/public/webhooks", json_body={"hookUrl": hook_url}
+        )
         return Webhook.from_dict(data)
 
     def delete(self, hook_url: str) -> None:
@@ -105,16 +109,21 @@ class AsyncWebhooksResource:
         self._t = transport
 
     async def create(self, hook_url: str) -> Webhook:
-        data = await self._t.request("POST", "/public/webhooks", json_body={"hookUrl": hook_url})
+        data = await self._t.request(
+            "POST", "/public/webhooks", json_body={"hookUrl": hook_url}
+        )
         return Webhook.from_dict(data)
 
     async def delete(self, hook_url: str) -> None:
-        await self._t.request("DELETE", "/public/webhooks", json_body={"hookUrl": hook_url})
+        await self._t.request(
+            "DELETE", "/public/webhooks", json_body={"hookUrl": hook_url}
+        )
 
 
 # ===========================================================================
 # Transactions
 # ===========================================================================
+
 
 class TransactionsResource:
     """Manages transaction operations (sync).
@@ -366,7 +375,12 @@ class TransactionsResource:
 
         resp = self._t.request("GET", "/public/transactions", params=params)
         if isinstance(resp, list):
-            return PaginatedResponse(count=len(resp), items=[Transaction.from_dict(i) for i in resp], current_page=1, total_pages=1)
+            return PaginatedResponse(
+                count=len(resp),
+                items=[Transaction.from_dict(i) for i in resp],
+                current_page=1,
+                total_pages=1,
+            )
         return PaginatedResponse.from_dict(resp)
 
 
@@ -467,7 +481,12 @@ class AsyncTransactionsResource:
             params["endDate"] = end_date
         resp = await self._t.request("GET", "/public/transactions", params=params)
         if isinstance(resp, list):
-            return PaginatedResponse(count=len(resp), items=[Transaction.from_dict(i) for i in resp], current_page=1, total_pages=1)
+            return PaginatedResponse(
+                count=len(resp),
+                items=[Transaction.from_dict(i) for i in resp],
+                current_page=1,
+                total_pages=1,
+            )
         return PaginatedResponse.from_dict(resp)
 
     # Aliases
@@ -479,6 +498,7 @@ class AsyncTransactionsResource:
 # ===========================================================================
 # Shops
 # ===========================================================================
+
 
 class ShopsResource:
     def __init__(self, transport: SyncTransport) -> None:
@@ -515,10 +535,14 @@ class ShopsResource:
 
     def create_product(self, shop_id: str, payload: Dict[str, Any]) -> Product:
         """POST /public/shops/{shopId}/products."""
-        data = self._t.request("POST", f"/public/shops/{shop_id}/products", json_body=payload)
+        data = self._t.request(
+            "POST", f"/public/shops/{shop_id}/products", json_body=payload
+        )
         return Product.from_dict(data)
 
-    def create_products_batch(self, shop_id: str, products: List[Dict[str, Any]]) -> List[Product]:
+    def create_products_batch(
+        self, shop_id: str, products: List[Dict[str, Any]]
+    ) -> List[Product]:
         """POST /public/shops/{shopId}/products-batch - Bulk create products."""
         data = self._t.request(
             "POST", f"/public/shops/{shop_id}/products-batch", json_body=products
@@ -551,7 +575,11 @@ class ShopsResource:
         return Product.from_dict(data)
 
     def upload_product_image(
-        self, shop_id: str, product_id: str, image_bytes: bytes, filename: str = "image.jpg"
+        self,
+        shop_id: str,
+        product_id: str,
+        image_bytes: bytes,
+        filename: str = "image.jpg",
     ) -> Dict[str, Any]:
         """POST /public/shops/{shopId}/products/{productId}/images."""
         files = {"file": (filename, image_bytes)}
@@ -597,7 +625,9 @@ class ShopsResource:
 
     def delete_order_field(self, shop_id: str, order_field_id: str) -> None:
         """DELETE /public/shops/{shopId}/order-fields/{orderFieldId}."""
-        self._t.request("DELETE", f"/public/shops/{shop_id}/order-fields/{order_field_id}")
+        self._t.request(
+            "DELETE", f"/public/shops/{shop_id}/order-fields/{order_field_id}"
+        )
 
     # -- Custom Fees ---------------------------------------------------------
 
@@ -627,7 +657,9 @@ class ShopsResource:
 
     def delete_custom_fee(self, shop_id: str, custom_fee_id: str) -> None:
         """DELETE /public/shops/{shopId}/custom-fees/{customFeeId}."""
-        self._t.request("DELETE", f"/public/shops/{shop_id}/custom-fees/{custom_fee_id}")
+        self._t.request(
+            "DELETE", f"/public/shops/{shop_id}/custom-fees/{custom_fee_id}"
+        )
 
     # -- Categories ----------------------------------------------------------
 
@@ -697,7 +729,9 @@ class AsyncShopsResource:
         return Shop.from_dict(data)
 
     async def update(self, shop_id: str, payload: Dict[str, Any]) -> Shop:
-        data = await self._t.request("PATCH", f"/public/shops/{shop_id}", json_body=payload)
+        data = await self._t.request(
+            "PATCH", f"/public/shops/{shop_id}", json_body=payload
+        )
         return Shop.from_dict(data)
 
     async def list_products(self, shop_id: str) -> List[Product]:
@@ -706,29 +740,49 @@ class AsyncShopsResource:
         return [Product.from_dict(i) for i in _coerce_list(items)]
 
     async def create_product(self, shop_id: str, payload: Dict[str, Any]) -> Product:
-        data = await self._t.request("POST", f"/public/shops/{shop_id}/products", json_body=payload)
+        data = await self._t.request(
+            "POST", f"/public/shops/{shop_id}/products", json_body=payload
+        )
         return Product.from_dict(data)
 
     async def get_product(self, shop_id: str, product_id: str) -> Product:
-        data = await self._t.request("GET", f"/public/shops/{shop_id}/products/{product_id}")
+        data = await self._t.request(
+            "GET", f"/public/shops/{shop_id}/products/{product_id}"
+        )
         return Product.from_dict(data)
 
-    async def update_product(self, shop_id: str, product_id: str, payload: Dict[str, Any]) -> Product:
-        data = await self._t.request("PATCH", f"/public/shops/{shop_id}/products/{product_id}", json_body=payload)
+    async def update_product(
+        self, shop_id: str, product_id: str, payload: Dict[str, Any]
+    ) -> Product:
+        data = await self._t.request(
+            "PATCH", f"/public/shops/{shop_id}/products/{product_id}", json_body=payload
+        )
         return Product.from_dict(data)
 
     async def delete_product(self, shop_id: str, product_id: str) -> None:
-        await self._t.request("DELETE", f"/public/shops/{shop_id}/products/{product_id}")
+        await self._t.request(
+            "DELETE", f"/public/shops/{shop_id}/products/{product_id}"
+        )
 
-    async def create_products_batch(self, shop_id: str, products: List[Dict[str, Any]]) -> List[Product]:
-        data = await self._t.request("POST", f"/public/shops/{shop_id}/products-batch", json_body=products)
+    async def create_products_batch(
+        self, shop_id: str, products: List[Dict[str, Any]]
+    ) -> List[Product]:
+        data = await self._t.request(
+            "POST", f"/public/shops/{shop_id}/products-batch", json_body=products
+        )
         return [Product.from_dict(i) for i in _coerce_list(data)]
 
-    async def update_product_by_sku(self, shop_id: str, payload: Dict[str, Any]) -> Product:
-        data = await self._t.request("PATCH", f"/public/shops/{shop_id}/products-by-sku", json_body=payload)
+    async def update_product_by_sku(
+        self, shop_id: str, payload: Dict[str, Any]
+    ) -> Product:
+        data = await self._t.request(
+            "PATCH", f"/public/shops/{shop_id}/products-by-sku", json_body=payload
+        )
         return Product.from_dict(data)
 
-    async def update_products_taxes(self, shop_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    async def update_products_taxes(
+        self, shop_id: str, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
         return await self._t.request("PUT", f"/public/shops/{shop_id}/products-taxes", json_body=payload)  # type: ignore[return-value]
 
     async def list_order_fields(self, shop_id: str) -> List[OrderField]:
@@ -736,32 +790,56 @@ class AsyncShopsResource:
         items = data.get("items", data) if isinstance(data, dict) else data
         return [OrderField.from_dict(i) for i in _coerce_list(items)]
 
-    async def create_order_field(self, shop_id: str, payload: Dict[str, Any]) -> OrderField:
-        data = await self._t.request("POST", f"/public/shops/{shop_id}/order-fields", json_body=payload)
+    async def create_order_field(
+        self, shop_id: str, payload: Dict[str, Any]
+    ) -> OrderField:
+        data = await self._t.request(
+            "POST", f"/public/shops/{shop_id}/order-fields", json_body=payload
+        )
         return OrderField.from_dict(data)
 
-    async def update_order_field(self, shop_id: str, order_field_id: str, payload: Dict[str, Any]) -> OrderField:
-        data = await self._t.request("PATCH", f"/public/shops/{shop_id}/order-fields/{order_field_id}", json_body=payload)
+    async def update_order_field(
+        self, shop_id: str, order_field_id: str, payload: Dict[str, Any]
+    ) -> OrderField:
+        data = await self._t.request(
+            "PATCH",
+            f"/public/shops/{shop_id}/order-fields/{order_field_id}",
+            json_body=payload,
+        )
         return OrderField.from_dict(data)
 
     async def delete_order_field(self, shop_id: str, order_field_id: str) -> None:
-        await self._t.request("DELETE", f"/public/shops/{shop_id}/order-fields/{order_field_id}")
+        await self._t.request(
+            "DELETE", f"/public/shops/{shop_id}/order-fields/{order_field_id}"
+        )
 
     async def list_custom_fees(self, shop_id: str) -> List[CustomFee]:
         data = await self._t.request("GET", f"/public/shops/{shop_id}/custom-fees")
         items = data.get("items", data) if isinstance(data, dict) else data
         return [CustomFee.from_dict(i) for i in _coerce_list(items)]
 
-    async def create_custom_fee(self, shop_id: str, payload: Dict[str, Any]) -> CustomFee:
-        data = await self._t.request("POST", f"/public/shops/{shop_id}/custom-fees", json_body=payload)
+    async def create_custom_fee(
+        self, shop_id: str, payload: Dict[str, Any]
+    ) -> CustomFee:
+        data = await self._t.request(
+            "POST", f"/public/shops/{shop_id}/custom-fees", json_body=payload
+        )
         return CustomFee.from_dict(data)
 
-    async def update_custom_fee(self, shop_id: str, custom_fee_id: str, payload: Dict[str, Any]) -> CustomFee:
-        data = await self._t.request("PATCH", f"/public/shops/{shop_id}/custom-fees/{custom_fee_id}", json_body=payload)
+    async def update_custom_fee(
+        self, shop_id: str, custom_fee_id: str, payload: Dict[str, Any]
+    ) -> CustomFee:
+        data = await self._t.request(
+            "PATCH",
+            f"/public/shops/{shop_id}/custom-fees/{custom_fee_id}",
+            json_body=payload,
+        )
         return CustomFee.from_dict(data)
 
     async def delete_custom_fee(self, shop_id: str, custom_fee_id: str) -> None:
-        await self._t.request("DELETE", f"/public/shops/{shop_id}/custom-fees/{custom_fee_id}")
+        await self._t.request(
+            "DELETE", f"/public/shops/{shop_id}/custom-fees/{custom_fee_id}"
+        )
 
     async def list_categories(self, shop_id: str) -> List[Category]:
         data = await self._t.request("GET", f"/public/shops/{shop_id}/categories")
@@ -769,15 +847,25 @@ class AsyncShopsResource:
         return [Category.from_dict(i) for i in _coerce_list(items)]
 
     async def create_category(self, shop_id: str, payload: Dict[str, Any]) -> Category:
-        data = await self._t.request("POST", f"/public/shops/{shop_id}/categories", json_body=payload)
+        data = await self._t.request(
+            "POST", f"/public/shops/{shop_id}/categories", json_body=payload
+        )
         return Category.from_dict(data)
 
-    async def update_category(self, shop_id: str, category_id: str, payload: Dict[str, Any]) -> Category:
-        data = await self._t.request("PATCH", f"/public/shops/{shop_id}/categories/{category_id}", json_body=payload)
+    async def update_category(
+        self, shop_id: str, category_id: str, payload: Dict[str, Any]
+    ) -> Category:
+        data = await self._t.request(
+            "PATCH",
+            f"/public/shops/{shop_id}/categories/{category_id}",
+            json_body=payload,
+        )
         return Category.from_dict(data)
 
     async def delete_category(self, shop_id: str, category_id: str) -> None:
-        await self._t.request("DELETE", f"/public/shops/{shop_id}/categories/{category_id}")
+        await self._t.request(
+            "DELETE", f"/public/shops/{shop_id}/categories/{category_id}"
+        )
 
     async def list_taxes(self, shop_id: str) -> List[Tax]:
         data = await self._t.request("GET", f"/public/shops/{shop_id}/taxes")
@@ -785,7 +873,9 @@ class AsyncShopsResource:
         return [Tax.from_dict(i) for i in _coerce_list(items)]
 
     async def create_tax(self, shop_id: str, payload: Dict[str, Any]) -> Tax:
-        data = await self._t.request("POST", f"/public/shops/{shop_id}/taxes", json_body=payload)
+        data = await self._t.request(
+            "POST", f"/public/shops/{shop_id}/taxes", json_body=payload
+        )
         return Tax.from_dict(data)
 
     async def delete_tax(self, shop_id: str, tax_id: str) -> None:
@@ -795,6 +885,7 @@ class AsyncShopsResource:
 # ===========================================================================
 # Customers
 # ===========================================================================
+
 
 class CustomersResource:
     def __init__(self, transport: SyncTransport) -> None:
@@ -908,7 +999,9 @@ class AsyncCustomersResource:
         return Customer.from_dict(data)
 
     async def update(self, customer_id: str, payload: Dict[str, Any]) -> Customer:
-        data = await self._t.request("PATCH", f"/public-customers/{customer_id}", json_body=payload)
+        data = await self._t.request(
+            "PATCH", f"/public-customers/{customer_id}", json_body=payload
+        )
         return Customer.from_dict(data)
 
     async def delete(self, customer_id: str) -> None:
@@ -920,11 +1013,15 @@ class AsyncCustomersResource:
         return [CustomerToken.from_dict(i) for i in _coerce_list(items)]
 
     async def get_token(self, customer_id: str, token_id: str) -> CustomerToken:
-        data = await self._t.request("GET", f"/public-customers/{customer_id}/tokens/{token_id}")
+        data = await self._t.request(
+            "GET", f"/public-customers/{customer_id}/tokens/{token_id}"
+        )
         return CustomerToken.from_dict(data)
 
     async def delete_token(self, customer_id: str, token_id: str) -> None:
-        await self._t.request("DELETE", f"/public-customers/{customer_id}/tokens/{token_id}")
+        await self._t.request(
+            "DELETE", f"/public-customers/{customer_id}/tokens/{token_id}"
+        )
 
     async def charge(self, payload: Dict[str, Any]) -> Transaction:
         """POST /public-customers/charge - async variant.
@@ -932,13 +1029,16 @@ class AsyncCustomersResource:
         See :meth:`.CustomersResource.charge` for full documentation and
         all three token-specification options.
         """
-        data = await self._t.request("POST", "/public-customers/charge", json_body=payload)
+        data = await self._t.request(
+            "POST", "/public-customers/charge", json_body=payload
+        )
         return Transaction.from_dict(data)
 
 
 # ===========================================================================
 # Public Client - PCI Merchant Tokenization
 # ===========================================================================
+
 
 class PublicClientResource:
     """Server-side counterpart for PCI Merchant Tokenization (sync).
