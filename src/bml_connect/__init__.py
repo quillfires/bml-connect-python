@@ -1,81 +1,164 @@
 """
 BML Connect Python SDK
-=====================
+======================
 
-Python SDK for Bank of Maldives Connect API with synchronous and asynchronous support.
+Python SDK for Bank of Maldives Connect API v2 with sync and async support.
 
-Features:
-- Create, retrieve, cancel, and list transactions
-- Verify webhook signatures
-- Supports both production and sandbox environments
-- Full sync/async compatibility with context manager support
+Four Integration Methods
+------------------------
 
-Basic Usage:
+- **Redirect Method** - redirect customer to BML's hosted payment page
+- **Direct Method** - QR providers (``vendor_qr_code``) or card providers (``url``)
+- **Card-On-File / Tokenization** - recurring charges against stored tokens
+- **PCI Merchant Tokenization** - encrypt card details server-side with RSA
+
+Basic Usage::
+
     from bml_connect import BMLConnect, Environment
 
-    # Sync client (context manager)
-    with BMLConnect('your-api-key', 'your-app-id', Environment.SANDBOX) as client:
-        transaction = client.transactions.create_transaction({...})
+    # Sync
+    with BMLConnect("sk_your_private_key", Environment.SANDBOX) as client:
+        # Register webhook
+        client.webhooks.create("https://yourapp.com/bml-hook")
 
-    # Async client (context manager)
-    async with BMLConnect(
-        'your-api-key', 'your-app-id', Environment.SANDBOX, async_mode=True
-    ) as client:
-        transaction = await client.transactions.create_transaction({...})
+        # Redirect Method
+        txn = client.transactions.create({
+            "redirectUrl": "https://yourapp.com/thanks",
+            "localId": "INV-001",
+            "order": {
+                "shopId": "YOUR_SHOP_ID",
+                "products": [{"productId": "PROD_ID", "numberOfItems": 1}],
+            },
+        })
+        print(txn.url)          # full URL
+        print(txn.short_url)    # short URL for SMS/messaging
 
-For detailed documentation and examples, visit:
+        # Direct Method - QR provider
+        txn = client.transactions.create({
+            "amount": 1000, "currency": "USD",
+            "provider": "alipay",
+            "webhook": "https://yourapp.com/bml-hook",
+        })
+        qr_data = txn.vendor_qr_code  # encode into QR image
+
+        # Card-On-File - charge stored token
+        tokens = client.customers.list_tokens("CUSTOMER_ID")
+        new_txn = client.transactions.create({"amount": 200, "currency": "USD",
+                                               "customerId": "CUSTOMER_ID"})
+        client.customers.charge({"customerId": "CUSTOMER_ID",
+                                  "transactionId": new_txn.id,
+                                  "tokenId": tokens[0].id})
+
+    # PCI Merchant Tokenization
+    with BMLConnect("sk_...", public_key="pk_...",
+                    environment=Environment.SANDBOX) as client:
+        enc_key = client.public_client.get_tokens_public_key()
+        card_b64 = CardEncryption.encrypt(enc_key.pem, {
+            "cardNumberRaw": "4111111111111111", "cardVDRaw": "123",
+            "cardExpiryMonth": 12, "cardExpiryYear": 29,
+        })
+        result = client.public_client.add_card(
+            card_data=card_b64, key_id=enc_key.key_id,
+            customer_id="CUSTOMER_ID",
+            redirect="https://yourapp.com/tokenisation-callback",
+        )
+        # redirect user to result.next_action.url for 3DS
+
+    # Async
+    async def run():
+        async with BMLConnect("sk_...", Environment.SANDBOX, async_mode=True) as client:
+            txn = await client.transactions.create({...})
+
+For documentation and examples visit:
 https://github.com/quillfires/bml-connect-python
 """
 
-__version__ = "1.2.1"
+__version__ = "2.0.0"
 __author__ = "Ali Fayaz"
 __email__ = "fayaz.quill@gmail.com"
 
-from .client import (
+from .client import BMLConnect
+from .crypto import CardEncryption
+from .exceptions import (
     AuthenticationError,
-    BMLConnect,
     BMLConnectError,
-    Environment,
     NotFoundError,
-    PaginatedResponse,
-    QRCode,
     RateLimitError,
     ServerError,
-    SignatureUtils,
-    SignMethod,
-    Transaction,
-    TransactionState,
     ValidationError,
 )
+from .models import (
+    Category,
+    ClientTokenNextAction,
+    ClientTokenResponse,
+    Company,
+    Customer,
+    CustomerToken,
+    CustomFee,
+    Environment,
+    OrderField,
+    PaginatedResponse,
+    PaymentProvider,
+    Product,
+    Provider,
+    QRCode,
+    Shop,
+    SignMethod,
+    Tax,
+    TokenisationStatus,
+    TokensPublicKey,
+    Transaction,
+    TransactionState,
+    Webhook,
+    WebhookEvent,
+    WebhookEventType,
+)
+from .signature import SignatureUtils
 
 __all__ = [
+    # Main client
     "BMLConnect",
+    # Models
     "Transaction",
     "QRCode",
     "PaginatedResponse",
+    "Webhook",
+    "WebhookEvent",
+    "Company",
+    "PaymentProvider",
+    "Shop",
+    "Product",
+    "Category",
+    "Tax",
+    "OrderField",
+    "CustomFee",
+    "Customer",
+    "CustomerToken",
+    # PCI Tokenization models
+    "TokensPublicKey",
+    "ClientTokenNextAction",
+    "ClientTokenResponse",
+    # Enums
     "Environment",
     "SignMethod",
     "TransactionState",
+    "Provider",
+    "WebhookEventType",
+    "TokenisationStatus",
+    # Exceptions
     "BMLConnectError",
     "AuthenticationError",
     "ValidationError",
     "NotFoundError",
     "ServerError",
     "RateLimitError",
+    # Utilities
     "SignatureUtils",
+    "CardEncryption",
 ]
 
-BMLConnect.__module__ = "bml_connect"
-Transaction.__module__ = "bml_connect"
-QRCode.__module__ = "bml_connect"
-PaginatedResponse.__module__ = "bml_connect"
-Environment.__module__ = "bml_connect"
-SignMethod.__module__ = "bml_connect"
-TransactionState.__module__ = "bml_connect"
-BMLConnectError.__module__ = "bml_connect"
-AuthenticationError.__module__ = "bml_connect"
-ValidationError.__module__ = "bml_connect"
-NotFoundError.__module__ = "bml_connect"
-ServerError.__module__ = "bml_connect"
-RateLimitError.__module__ = "bml_connect"
-SignatureUtils.__module__ = "bml_connect"
+# Make everything importable from the top-level package namespace
+for _name in __all__:
+    _obj = globals()[_name]
+    if hasattr(_obj, "__module__"):
+        _obj.__module__ = "bml_connect"

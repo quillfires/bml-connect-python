@@ -1,43 +1,85 @@
 """
-FastAPI Webhook Handler Example
-===============================
+FastAPI Webhook Example
+========================
 
-This example shows how to handle BML Connect webhooks with FastAPI.
+Async-native FastAPI server that:
+1. Registers its webhook endpoint with BML on startup.
+2. Verifies incoming notifications using the current SHA-256 header scheme
+   (X-Signature-Nonce, X-Signature-Timestamp, X-Signature).
+3. Falls back to legacy ``originalSignature`` verification for old v1 payloads.
+4. Unregisters the webhook on shutdown.
+
+Run:
+    pip install fastapi uvicorn bml-connect-python
+    BML_API_KEY=your_key uvicorn webhook_fastapi:app --port 8000
 """
 
-from fastapi import FastAPI, Request, HTTPException
-from bml_connect import BMLConnect
-import uvicorn
+import json
+import os
 
-app = FastAPI(title="BML Connect Webhook Handler")
-client = BMLConnect(api_key="your_api_key_here", app_id="your_app_id_here")
+from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi.responses import JSONResponse
 
-@app.post("/webhook")
-async def handle_webhook(request: Request):
+from bml_connect import BMLConnect, Environment
+
+API_KEY     = os.environ.get("BML_API_KEY", "your_api_key_here")
+WEBHOOK_URL = os.environ.get("BML_WEBHOOK_URL", "https://yourapp.com/bml-webhook")
+
+app    = FastAPI()
+client = BMLConnect(api_key=API_KEY, environment=Environment.PRODUCTION, async_mode=True)
+
+
+@app.on_event("startup")
+async def register_webhook() -> None:
     try:
-        payload = await request.json()
-        signature = payload.get("signature")
-        
-        if not signature:
-            raise HTTPException(400, "Missing signature header")
-        
-        if client.verify_webhook_signature(payload, signature):
-            # Process verified webhook
-            transaction_id = payload.get("transactionId")
-            status = payload.get("status")
-            amount = payload.get("amount", 0) / 100
-            currency = payload.get("currency", "MVR")
-            
-            print(f"Received webhook for transaction {transaction_id}")
-            print(f"Status: {status}, Amount: {amount:.2f} {currency}")
-            
-            # Add your business logic here (update database, send notification, etc.)
-            
-            return {"status": "success"}
-        else:
-            raise HTTPException(403, "Invalid signature")
-    except Exception as e:
-        raise HTTPException(400, str(e))
+        hook = await client.webhooks.create(WEBHOOK_URL)
+        print(f"BML webhook registered: {hook.id}")
+    except Exception as exc:
+        print(f"Warning: could not register webhook (already exists?): {exc}")
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+@app.on_event("shutdown")
+async def unregister_webhook() -> None:
+    try:
+        await client.webhooks.delete(WEBHOOK_URL)
+        print("BML webhook unregistered.")
+    except Exception:
+        pass
+    await client.aclose()
+
+
+@app.post("/bml-webhook")
+async def bml_webhook(
+    request: Request,
+    x_signature_nonce: str     = Header(default=""),
+    x_signature_timestamp: str = Header(default=""),
+    x_signature: str           = Header(default=""),
+) -> JSONResponse:
+    """Receive and verify BML transaction update notifications."""
+
+    if x_signature_nonce and x_signature_timestamp and x_signature:
+        # Current SHA-256 header verification
+        if not client.verify_webhook_signature(
+            x_signature_nonce, x_signature_timestamp, x_signature
+        ):
+            raise HTTPException(status_code=403, detail="Invalid signature")
+    else:
+        # Legacy originalSignature fallback
+        raw = await request.body()
+        payload = json.loads(raw)
+        original_sig = payload.get("originalSignature")
+        if not original_sig:
+            raise HTTPException(status_code=400, detail="Missing signature headers")
+        if not client.verify_legacy_webhook_signature(payload, original_sig):
+            raise HTTPException(status_code=403, detail="Invalid legacy signature")
+
+    payload = await request.json()
+    txn_id = payload.get("id") or payload.get("transactionId")
+    state  = payload.get("state")
+    print(f"Webhook: txn={txn_id} state={state}")
+
+    transaction = await client.transactions.get(txn_id)
+
+    # TODO: persist state change, trigger business logic
+
+    return JSONResponse({"status": "ok"})

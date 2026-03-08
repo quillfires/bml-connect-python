@@ -5,10 +5,10 @@
 Only the latest release of `bml-connect-python` receives security fixes.
 If you are on an older version, please upgrade before reporting.
 
-| Version | Supported |
-|---|---|
-| Latest (1.x) | ✅ |
-| Older versions | ❌ |
+| Version        | Supported |
+| -------------- | --------- |
+| Latest (2.x)   | ✅        |
+| Older versions | ❌        |
 
 ---
 
@@ -35,8 +35,8 @@ You will receive a response within **48 hours** acknowledging receipt. If the is
 
 This policy covers the `bml-connect-python` SDK itself. It does not cover:
 
-- The Bank of Maldives Connect API - report API vulnerabilities directly to BML at [info@bml.com.mv](mailto:info@bml.com.mv)
-- Third-party dependencies (`requests`, `aiohttp`) - report those to their respective maintainers
+- The Bank of Maldives Connect API - report API vulnerabilities directly to BML at [developers@bml.com.mv](mailto:developers@bml.com.mv)
+- Third-party dependencies (`requests`, `aiohttp`, `cryptography`) - report those to their respective maintainers
 - Your own application code that uses this SDK
 
 ---
