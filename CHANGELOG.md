@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2026-03-28
+
+- chore: pin requests>=2.33.0, bump version
+- chore: pin cryptography>=46.0.6, bump version
+- cchore: drop Python 3.9 support, require >=3.10
+
+## [2.0.1] - 2026-03-28
+
+- chore: pin requests>=2.32.4, bump version
+- chore(deps-dev): bump pytest-cov in the dev-dependencies group
+
 ## [2.0.0] - 2026-02-28
 
 ### Added

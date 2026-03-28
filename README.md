@@ -58,7 +58,7 @@ Compatible with all Python frameworks including Django, Flask, FastAPI, and Sani
 pip install bml-connect-python
 ```
 
-**Requires Python 3.9+**
+**Requires Python 3.10+**
 
 ---
 
