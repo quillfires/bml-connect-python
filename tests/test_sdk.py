@@ -170,13 +170,12 @@ def test_client_verify_webhook_headers():
 
 def test_verify_legacy_signature_valid():
     import base64
-    import hashlib
 
     api_key = "key"
     amount = 1000
     currency = "MVR"
-    sign_str = f"amount={amount}&currency={currency}&apiKey={api_key}"
-    original_sig = base64.b64encode(hashlib.md5(sign_str.encode()).digest()).decode()
+    # Precomputed base64-encoded MD5 of "amount=1000&currency=MVR&apiKey=key"
+    original_sig = "wcf+FJyEcv0i9LrcomIiPA=="
 
     assert SignatureUtils.verify_legacy_signature(
         {"amount": amount, "currency": currency}, original_sig, api_key
@@ -185,11 +184,10 @@ def test_verify_legacy_signature_valid():
 
 def test_verify_legacy_signature_wrong_amount():
     import base64
-    import hashlib
 
     api_key = "key"
-    sign_str = "amount=1000&currency=MVR&apiKey=key"
-    sig = base64.b64encode(hashlib.md5(sign_str.encode()).digest()).decode()
+    # Same precomputed base64-encoded MD5 of the canonical signing string
+    sig = "wcf+FJyEcv0i9LrcomIiPA=="
 
     # Different amount → should fail
     assert not SignatureUtils.verify_legacy_signature(
