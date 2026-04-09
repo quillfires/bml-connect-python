@@ -41,11 +41,11 @@ jobs:
             echo "IS_DEPENDABOT=false" >> $GITHUB_ENV
           fi
 
-      - name: Bump minor version and export requirements
+      - name: Bump patch version and export requirements
         if: env.IS_DEPENDABOT == 'true'
         id: bump
         run: |
-          NEW_VERSION=$(poetry version minor | awk '{print $2}')
+          NEW_VERSION=$(poetry version patch | awk '{print $2}')
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
           # Regenerate requirements.txt files from Poetry
           poetry export -f requirements.txt --without-hashes > requirements.txt
