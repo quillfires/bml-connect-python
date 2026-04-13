@@ -7,6 +7,12 @@ This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.
 
 ## [] - 2026-04-13
 
+## [2.0.12] - 2026-04-13
+
+### Changes
+- Refactor dependabot-release workflow for clarity
+
+
 ### Changes
 - Refactor dependabot release workflow for version bump
 
