@@ -54,7 +54,7 @@ jobs:
           # Get the PR author login
           PR_AUTHOR=$(gh pr view $LAST_PR --json author --jq '.author.login')
           echo "PR_AUTHOR=$PR_AUTHOR"
-          if [[ "$PR_AUTHOR" == "dependabot"* ]]; then
+          if [[ "$PR_AUTHOR" == "dependabot"* ]] || [[ "$PR_AUTHOR" == "app/dependabot" ]]; then
             echo "IS_DEPENDABOT=true" >> $GITHUB_ENV
           else
             echo "IS_DEPENDABOT=false" >> $GITHUB_ENV
