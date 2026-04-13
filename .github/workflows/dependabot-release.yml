@@ -37,6 +37,8 @@ jobs:
 
       - name: Check if last merged PR was Dependabot
         id: dependabot_check
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Get the most recent closed PR targeting main
           LAST_PR=$(gh pr list -B main -s closed --limit 1 --json number --jq '.[0].number')
