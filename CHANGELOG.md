@@ -7,6 +7,12 @@ This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.
 
 ## [] - 2026-04-13
 
+## [2.0.13] - 2026-04-13
+
+### Changes
+- Update GitHub Actions workflow for release process
+
+
 ## [2.0.12] - 2026-04-13
 
 ### Changes
