@@ -10,14 +10,12 @@ This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.
 ### Changes
 - Adjust changelog update logic in workflow
 
-
-## [2.0.2] - 2026-03-28
-
 ## [2.0.7] - 2026-04-13
 
 ### Changes
 - Refactor Dependabot release workflow configuration
 
+## [2.0.2] - 2026-03-28
 
 - chore: pin requests>=2.33.0, bump version
 - chore: pin cryptography>=46.0.6, bump version
