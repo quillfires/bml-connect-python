@@ -44,8 +44,8 @@ jobs:
           LAST_PR=$(gh pr list -B main -s closed --limit 1 --json number --jq '.[0].number')
           
           # Verify that it was merged
-          MERGED=$(gh pr view $LAST_PR --json merged --jq '.merged')
-          if [ "$MERGED" != "true" ]; then
+          MERGED_AT=$(gh pr view $LAST_PR --json mergedAt --jq '.mergedAt')
+          if [ -z "$MERGED_AT" ]; then
             echo "IS_DEPENDABOT=false" >> $GITHUB_ENV
             echo "No merged Dependabot PR found."
             exit 0
