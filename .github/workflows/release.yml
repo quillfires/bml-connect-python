@@ -6,7 +6,11 @@ on:
       - "v*.*.*"
 
 permissions:
-  contents: write # needed to create GitHub releases
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   # ── 1. Validate the tag matches pyproject.toml version ─────────────────────
