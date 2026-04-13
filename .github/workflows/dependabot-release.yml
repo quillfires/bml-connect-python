@@ -17,7 +17,6 @@ jobs:
     name: Bump version and tag
     runs-on: ubuntu-latest
 
-    # Prevent loop from version commits
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
 
     steps:
@@ -41,9 +40,8 @@ jobs:
         uses: snok/install-poetry@v1
         with:
           version: "1.8.5"
-          virtualenvs-in-project: true
 
-      - name: Sync main
+      - name: Sync
         run: git pull --rebase origin main
 
       - name: Determine bump type
@@ -61,60 +59,38 @@ jobs:
         id: version
         run: |
           poetry version ${{ steps.bump.outputs.type }}
-          echo "version=$(poetry version --short)" >> "$GITHUB_OUTPUT"
+          VERSION=$(poetry version --short)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Update CHANGELOG
         run: |
-          VERSION="${{ steps.version.outputs.new_version }}"
+          VERSION="${{ steps.version.outputs.version }}"
           DATE=$(date -u +%Y-%m-%d)
-          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          MSG="${{ github.event.head_commit.message }}"
 
-          [ -f CHANGELOG.md ] || printf "# Changelog\n\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n" > CHANGELOG.md
-          if grep -q "## \[${VERSION}\]" CHANGELOG.md; then
-            echo "Changelog already contains version ${VERSION}, skipping"
-          else
-            NEW_BLOCK="## [${VERSION}] - ${DATE}\n\n### Changes\n- ${COMMIT_MSG}\n\n"
-            head -n 6 CHANGELOG.md > CHANGELOG.tmp
-            echo "" >> CHANGELOG.tmp
-            printf "$NEW_BLOCK" >> CHANGELOG.tmp
-            tail -n +7 CHANGELOG.md >> CHANGELOG.tmp
-            mv CHANGELOG.tmp CHANGELOG.md
-          fi
+          [ -f CHANGELOG.md ] || printf "# Changelog\n\n" > CHANGELOG.md
 
-      - name: Regenerate requirements
-        run: |
-          if [ -f requirements.txt ]; then
-            poetry export -f requirements.txt --without-hashes -o requirements.txt
-          fi
+          NEW_BLOCK="## [${VERSION}] - ${DATE}\n\n### Changes\n- ${MSG}\n\n"
 
-          if [ -f requirements-dev.txt ]; then
-            poetry export -f requirements.txt --with dev --without-hashes -o requirements-dev.txt
-          fi
+          head -n 8 CHANGELOG.md > CHANGELOG.tmp || true
+          echo "" >> CHANGELOG.tmp
+          printf "$NEW_BLOCK" >> CHANGELOG.tmp
+          tail -n +9 CHANGELOG.md >> CHANGELOG.tmp 2>/dev/null || true
+          mv CHANGELOG.tmp CHANGELOG.md
 
       - name: Commit changes
         run: |
-          VERSION="${{ steps.version.outputs.new_version }}"
+          VERSION="${{ steps.version.outputs.version }}"
 
           git add pyproject.toml CHANGELOG.md
 
-          [ -f requirements.txt ] && git add requirements.txt || true
-          [ -f requirements-dev.txt ] && git add requirements-dev.txt || true
-
           git commit -m "chore: bump version to v${VERSION} [skip ci]" || exit 0
 
-          git push origin main
-
-      - name: Push commit and tag
+      - name: Push + Tag (single atomic order)
         run: |
-          VERSION="${{ steps.version.outputs.new_version }}"
+          VERSION="${{ steps.version.outputs.version }}"
           TAG="v${VERSION}"
 
           git push origin main
-
-          # Prevent duplicate tag issues
-          if git ls-remote --tags origin | grep -q "refs/tags/${TAG}$"; then
-            git push origin --delete "${TAG}" || true
-          fi
-
-          git tag "${TAG}"
-          git push origin "${TAG}"
+          git tag -f "$TAG"
+          git push origin "$TAG" --force
