@@ -75,10 +75,10 @@ jobs:
             echo "Changelog already contains version ${VERSION}, skipping"
           else
             NEW_BLOCK="## [${VERSION}] - ${DATE}\n\n### Changes\n- ${COMMIT_MSG}\n\n"
-            head -n 8 CHANGELOG.md > CHANGELOG.tmp
+            head -n 6 CHANGELOG.md > CHANGELOG.tmp
             echo "" >> CHANGELOG.tmp
             printf "$NEW_BLOCK" >> CHANGELOG.tmp
-            tail -n +9 CHANGELOG.md >> CHANGELOG.tmp
+            tail -n +7 CHANGELOG.md >> CHANGELOG.tmp
             mv CHANGELOG.tmp CHANGELOG.md
           fi
 
