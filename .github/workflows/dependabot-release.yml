@@ -38,8 +38,17 @@ jobs:
       - name: Check if last merged PR was Dependabot
         id: dependabot_check
         run: |
-          # Get last merged PR number
-          LAST_PR=$(gh pr list --state merged --sort merged --limit 1 --json number --jq '.[0].number')
+          # Get the most recent closed PR targeting main
+          LAST_PR=$(gh pr list -B main -s closed --limit 1 --json number --jq '.[0].number')
+          
+          # Verify that it was merged
+          MERGED=$(gh pr view $LAST_PR --json merged --jq '.merged')
+          if [ "$MERGED" != "true" ]; then
+            echo "IS_DEPENDABOT=false" >> $GITHUB_ENV
+            echo "No merged Dependabot PR found."
+            exit 0
+          fi
+
           # Get the PR author login
           PR_AUTHOR=$(gh pr view $LAST_PR --json author --jq '.author.login')
           echo "PR_AUTHOR=$PR_AUTHOR"
