@@ -1,4 +1,4 @@
-name: Auto Version Bump and Release
+name: Auto Version Bump
 
 on:
   push:
@@ -9,14 +9,15 @@ permissions:
   contents: write
 
 concurrency:
-  group: auto-release
+  group: auto-version-bump
   cancel-in-progress: false
 
 jobs:
-  release:
-    name: Version bump and release
+  bump:
+    name: Bump version and tag
     runs-on: ubuntu-latest
 
+    # Prevent loop from version commits
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
 
     steps:
@@ -24,9 +25,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PAT }}
 
-      - name: Configure git identity
+      - name: Configure git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -42,17 +43,15 @@ jobs:
           version: "1.8.5"
           virtualenvs-in-project: true
 
-      - name: Pull latest main
+      - name: Sync main
         run: git pull --rebase origin main
 
       - name: Determine bump type
         id: bump
         run: |
-          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          MSG="${{ github.event.head_commit.message }}"
 
-          echo "Commit: $COMMIT_MSG"
-
-          if echo "$COMMIT_MSG" | grep -qi "minor"; then
+          if echo "$MSG" | grep -qi "minor"; then
             echo "type=minor" >> "$GITHUB_OUTPUT"
           else
             echo "type=patch" >> "$GITHUB_OUTPUT"
@@ -62,7 +61,7 @@ jobs:
         id: version
         run: |
           poetry version ${{ steps.bump.outputs.type }}
-          echo "new_version=$(poetry version --short)" >> "$GITHUB_OUTPUT"
+          echo "version=$(poetry version --short)" >> "$GITHUB_OUTPUT"
 
       - name: Update CHANGELOG
         run: |
@@ -101,7 +100,9 @@ jobs:
           [ -f requirements.txt ] && git add requirements.txt || true
           [ -f requirements-dev.txt ] && git add requirements-dev.txt || true
 
-          git commit -m "chore(release): v${VERSION} [skip ci]" || echo "No changes to commit"
+          git commit -m "chore: bump version to v${VERSION} [skip ci]" || exit 0
+
+          git push origin main
 
       - name: Push commit and tag
         run: |
