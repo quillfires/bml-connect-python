@@ -1,6 +1,5 @@
 version: 2
 updates:
-  # Python dependencies via Poetry
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
@@ -8,6 +7,10 @@ updates:
       day: "monday"
       time: "09:00"
     open-pull-requests-limit: 10
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
     groups:
       dev-dependencies:
         dependency-type: "development"
@@ -17,13 +20,16 @@ updates:
       - "dependencies"
       - "automated"
 
-  # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "09:00"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
     labels:
       - "dependencies"
       - "github-actions"
