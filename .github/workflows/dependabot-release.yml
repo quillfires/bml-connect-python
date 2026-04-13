@@ -1,41 +1,40 @@
-name: Auto-merge and version bump
+name: Auto Version Bump and Release
 
 on:
-  pull_request:
-    types: [closed]
+  push:
+    branches:
+      - main
 
 permissions:
   contents: write
-  pull-requests: write
 
 concurrency:
-  group: version-bump
+  group: auto-release
   cancel-in-progress: false
 
 jobs:
-  version-bump:
-    name: Bump version on merge
+  release:
+    name: Version bump and release
     runs-on: ubuntu-latest
-    if: |
-      github.event.pull_request.merged == true &&
-      (
-        github.event.pull_request.user.login == 'dependabot[bot]' ||
-        github.event.pull_request.user.login == 'quillfires'
-      )
+
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # GH_PAT required for tag push to trigger release.yml.
-          # GITHUB_TOKEN fallback works but will NOT trigger downstream workflows.
           token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Configure git identity
         run: |
-          git config user.name  "github-actions[bot]"
+          git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
       - name: Install Poetry
         uses: snok/install-poetry@v1
@@ -49,9 +48,11 @@ jobs:
       - name: Determine bump type
         id: bump
         run: |
-          TITLE="${{ github.event.pull_request.title }}"
-          LABELS="${{ join(github.event.pull_request.labels.*.name, ',') }}"
-          if echo "$LABELS" | grep -qi "semver-minor" || echo "$TITLE" | grep -qi "minor"; then
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+
+          echo "Commit: $COMMIT_MSG"
+
+          if echo "$COMMIT_MSG" | grep -qi "minor"; then
             echo "type=minor" >> "$GITHUB_OUTPUT"
           else
             echo "type=patch" >> "$GITHUB_OUTPUT"
@@ -63,18 +64,17 @@ jobs:
           poetry version ${{ steps.bump.outputs.type }}
           echo "new_version=$(poetry version --short)" >> "$GITHUB_OUTPUT"
 
-      - name: Update CHANGELOG.md
+      - name: Update CHANGELOG
         run: |
           VERSION="${{ steps.version.outputs.new_version }}"
           DATE=$(date -u +%Y-%m-%d)
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          PR_TITLE="${{ github.event.pull_request.title }}"
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+
           [ -f CHANGELOG.md ] || printf "# Changelog\n\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n" > CHANGELOG.md
           if grep -q "## \[${VERSION}\]" CHANGELOG.md; then
             echo "Changelog already contains version ${VERSION}, skipping"
           else
-            NEW_BLOCK="## [${VERSION}] - ${DATE}\n\n### Changes\n- ${PR_TITLE} (#${PR_NUMBER})\n\n"
-            # Preserve the first 8 lines (Keep a Changelog header), insert new block after them.
+            NEW_BLOCK="## [${VERSION}] - ${DATE}\n\n### Changes\n- ${COMMIT_MSG}\n\n"
             head -n 8 CHANGELOG.md > CHANGELOG.tmp
             echo "" >> CHANGELOG.tmp
             printf "$NEW_BLOCK" >> CHANGELOG.tmp
@@ -82,34 +82,37 @@ jobs:
             mv CHANGELOG.tmp CHANGELOG.md
           fi
 
-      - name: Regenerate requirements files
+      - name: Regenerate requirements
         run: |
           if [ -f requirements.txt ]; then
             poetry export -f requirements.txt --without-hashes -o requirements.txt
           fi
+
           if [ -f requirements-dev.txt ]; then
             poetry export -f requirements.txt --with dev --without-hashes -o requirements-dev.txt
           fi
 
-      - name: Commit
+      - name: Commit changes
         run: |
           VERSION="${{ steps.version.outputs.new_version }}"
+
           git add pyproject.toml CHANGELOG.md
-          [ -f requirements.txt ]     && git add requirements.txt     || true
+
+          [ -f requirements.txt ] && git add requirements.txt || true
           [ -f requirements-dev.txt ] && git add requirements-dev.txt || true
-          git commit -m "chore: bump version to ${VERSION} [skip ci]" || echo "Nothing to commit"
+
+          git commit -m "chore(release): v${VERSION} [skip ci]" || echo "No changes to commit"
 
       - name: Push commit and tag
         run: |
-          TAG="v${{ steps.version.outputs.new_version }}"
+          VERSION="${{ steps.version.outputs.new_version }}"
+          TAG="v${VERSION}"
 
           git push origin main
 
-          # Remove stale remote tag if present - handles a prior run that pushed
-          # the tag but failed before the commit push completed.
+          # Prevent duplicate tag issues
           if git ls-remote --tags origin | grep -q "refs/tags/${TAG}$"; then
-            echo "Stale tag ${TAG} found - deleting before re-push"
-            git push origin --delete "${TAG}"
+            git push origin --delete "${TAG}" || true
           fi
 
           git tag "${TAG}"
