@@ -7,6 +7,14 @@ This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.
 
 ## [] - 2026-04-13
 
+## [2.0.14] - 2026-04-13
+
+### Changes
+- Remove unnecessary dependencies from requirements.txt
+
+Removed several dependencies that are not needed for Python 3.10 and above.
+
+
 ## [2.0.13] - 2026-04-13
 
 ### Changes
