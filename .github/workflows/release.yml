@@ -7,160 +7,110 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 concurrency:
   group: release
   cancel-in-progress: false
 
 jobs:
-  # ── 1. Validate the tag matches pyproject.toml version ─────────────────────
   validate:
     name: Validate version
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.get_version.outputs.version }}
+      version: ${{ steps.v.outputs.version }}
+
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v4
 
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
           version: "1.8.5"
-          virtualenvs-in-project: true
 
-      - name: Get version from tag
-        id: get_version
+      - name: Validate tag vs pyproject
+        id: v
         run: |
-          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
-          TOML_VERSION=$(poetry version --short)
-          echo "Tag version:  $TAG_VERSION"
-          echo "TOML version: $TOML_VERSION"
-          if [ "$TAG_VERSION" != "$TOML_VERSION" ]; then
-            echo "❌ Tag v$TAG_VERSION does not match pyproject.toml version $TOML_VERSION"
+          TAG="${GITHUB_REF#refs/tags/v}"
+          TOML=$(poetry version --short)
+
+          echo "tag=$TAG"
+          echo "toml=$TOML"
+
+          if [ "$TAG" != "$TOML" ]; then
+            echo "version mismatch"
             exit 1
           fi
-          echo "version=$TOML_VERSION" >> "$GITHUB_OUTPUT"
 
-  # ── 2. Run full test suite ──────────────────────────────────────────────────
+          echo "version=$TOML" >> "$GITHUB_OUTPUT"
+
   test:
-    name: Test before release
     needs: validate
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python: ["3.10", "3.11", "3.12"]
 
     steps:
-      - uses: actions/checkout@v6.0.2
-
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python }}
 
       - uses: snok/install-poetry@v1
-        with:
-          version: "1.8.5"
-          virtualenvs-in-project: true
 
-      - uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
-
-      - run: poetry install --no-interaction
+      - run: poetry install
       - run: poetry run pytest -v
 
-  # ── 3. Build the distribution ───────────────────────────────────────────────
   build:
-    name: Build distribution
     needs: test
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6.0.2
 
-      - uses: actions/setup-python@v6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - uses: snok/install-poetry@v1
-        with:
-          version: "1.8.5"
-          virtualenvs-in-project: true
+      - run: poetry build
 
-      - name: Build wheel and sdist
-        run: poetry build
-
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
-          if-no-files-found: error
 
-  # ── 4. Publish to PyPI ──────────────────────────────────────────────────────
-  publish-pypi:
-    name: Publish to PyPI
+  publish:
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/project/bml-connect-python/
     permissions:
-      id-token: write # required for OIDC trusted publishing
+      id-token: write
 
     steps:
-      - name: Download dist artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
 
-      - name: Publish to PyPI (trusted publishing / OIDC)
-        uses: pypa/gh-action-pypi-publish@release/v1
-        continue-on-error: true
+      - uses: pypa/gh-action-pypi-publish@release/v1
 
-  # ── 5. Create GitHub Release with changelog ─────────────────────────────────
   github-release:
-    name: Create GitHub Release
     needs: [build, validate]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v6.0.2
-        with:
-          fetch-depth: 0 # full history for changelog extraction
 
-      - name: Download dist artifact
-        uses: actions/download-artifact@v4
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
 
-      - name: Extract changelog for this version
-        id: changelog
-        run: |
-          VERSION="${{ needs.validate.outputs.version }}"
-          NOTES=$(awk "/^## \[${VERSION}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
-          if [ -z "$NOTES" ]; then
-            PREV_TAG=$(git tag --sort=-version:refname | grep -v "v${VERSION}" | head -1)
-            if [ -n "$PREV_TAG" ]; then
-              NOTES=$(git log "${PREV_TAG}..HEAD" --pretty=format:"- %s" --no-merges | head -20)
-            fi
-          fi
-          if [ -z "$NOTES" ]; then
-            NOTES="See CHANGELOG.md for details."
-          fi
-          echo "notes<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$NOTES" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
-
-      - name: Create GitHub Release
+      - name: Create Release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
-          name: "v${{ needs.validate.outputs.version }}"
-          body: ${{ steps.changelog.outputs.notes }}
+          name: ${{ needs.validate.outputs.version }}
           files: dist/*
-          draft: false
-          prerelease: ${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') }}
