@@ -86,7 +86,16 @@ jobs:
 
           git commit -m "chore: bump version to v${VERSION} [skip ci]" || exit 0
 
-      - name: Push
+      - name: Push commit
         run: |
           set -e
           git push origin main
+
+      - name: Create tag (IMPORTANT FIX)
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="v$VERSION"
+          sleep 120
+
+          git tag -f "$TAG"
+          git push origin "$TAG"
