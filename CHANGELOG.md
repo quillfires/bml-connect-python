@@ -7,6 +7,14 @@ This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.
 
 ## [] - 2026-04-13
 
+## [2.0.16] - 2026-04-14
+
+### Changes
+- Add sleep before checking for existing tags
+
+Added a sleep command to wait before checking for existing tags.
+
+
 ## [2.0.15] - 2026-04-14
 
 ### Changes
