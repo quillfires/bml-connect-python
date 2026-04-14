@@ -1,6 +1,8 @@
+<div align="center">
+
 # BML Connect Python SDK
 
-[![PyPI version](https://badge.fury.io/py/bml-connect-python.svg)](https://badge.fury.io/py/bml-connect-python)
+[![PyPI](https://img.shields.io/pypi/v/bml-connect-python?label=Latest%20release&color=green)](https://pypi.org/project/bml-connect-python/)
 [![Python Support](https://img.shields.io/pypi/pyversions/bml-connect-python.svg)](https://pypi.org/project/bml-connect-python/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -11,12 +13,18 @@ Compatible with all Python frameworks including Django, Flask, FastAPI, and Sani
 
 > **v2.0.0** - full coverage of the BML Connect v2 API across all four integration methods: Redirect, Direct, Card-On-File Tokenization, and PCI Merchant Tokenization.
 
+</div>
+
 ---
 
 ## Table of Contents
 
 - [Features](#features)
 - [Installation](#installation)
+- [Quick Start](#quick-start)
+  - [Get your credentials](#get-your-credentials)
+  - [Basic setup](#basic-setup)
+  - [Use environment variables](#use-environment-variables)
 - [Integration Methods](#integration-methods)
   - [Redirect Method](#redirect-method)
   - [Direct Method](#direct-method)
@@ -59,6 +67,77 @@ pip install bml-connect-python
 ```
 
 **Requires Python 3.10+**
+
+---
+
+## Quick Start
+
+### Get your credentials
+
+You need two credentials from the BML merchant portal:
+
+- **API key** - private key starting with `sk_`. Sent as the `Authorization` header on every request. Keep this secret.
+- **App ID** - your application identifier.
+- **Public key** - starts with `pk_`. Only needed for PCI card tokenization. Safe to expose to clients.
+
+---
+
+### Basic setup
+
+```python
+from bml_connect import BMLConnect, Environment
+
+client = BMLConnect(
+    api_key="sk_your_api_key",
+    app_id="your_app_id",
+    environment=Environment.SANDBOX,
+)
+```
+
+---
+
+### Use environment variables
+
+Never hardcode credentials. Use environment variables:
+
+```python
+import os
+from bml_connect import BMLConnect, Environment
+
+client = BMLConnect(
+    api_key=os.environ["BML_API_KEY"],
+    app_id=os.environ["BML_APP_ID"],
+    environment=os.environ.get("BML_ENV", "production"),
+)
+```
+
+`.env` file (local development only, never commit this):
+
+```
+BML_API_KEY=sk_your_api_key
+BML_APP_ID=your_app_id
+BML_ENV=sandbox
+```
+
+Load with `python-dotenv`:
+
+```python
+from dotenv import load_dotenv
+load_dotenv()
+```
+
+---
+
+#### With public key (PCI tokenization)
+
+```python
+client = BMLConnect(
+    api_key=os.environ["BML_API_KEY"],
+    app_id=os.environ["BML_APP_ID"],
+    environment=Environment.PRODUCTION,
+    public_key=os.environ["BML_PUBLIC_KEY"],
+)
+```
 
 ---
 
