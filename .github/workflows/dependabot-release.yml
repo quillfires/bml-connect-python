@@ -86,16 +86,7 @@ jobs:
 
           git commit -m "chore: bump version to v${VERSION} [skip ci]" || exit 0
 
-      - name: Push + Tag
+      - name: Push
         run: |
           set -e
-          VERSION="${{ steps.version.outputs.version }}"
-          TAG="v${VERSION}"
           git push origin main
-          sleep 90
-          if git ls-remote --tags origin | grep -q "refs/tags/${TAG}$"; then
-            echo "Tag already exists, skipping tag creation"
-            exit 0
-          fi
-          git tag "$TAG"
-          git push origin "$TAG"
