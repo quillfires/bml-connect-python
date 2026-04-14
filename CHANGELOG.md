@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.23] - 2026-04-14
+
+### Changes
+- Clean up CHANGELOG.md and update entries
+
+Removed outdated changelog entries and adjusted formatting.
+
+
 ## [2.0.22] - 2026-04-14
 
 ### Changes
