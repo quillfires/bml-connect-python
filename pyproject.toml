@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bml-connect-python"
-version = "2.0.18"
+version = "2.0.19"
 description = "Python SDK for Bank of Maldives Connect API v2 with sync and async support, covering all four payment integration methods"
 authors = ["Fayaz (Quill) <fayaz.quill@gmail.com>"]
 maintainers = ["Fayaz (Quill) <fayaz.quill@gmail.com>"]

@@ -7,6 +7,12 @@ This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.
 
 ## [] - 2026-04-13
 
+## [2.0.19] - 2026-04-14
+
+### Changes
+- Update tag creation workflow to use poetry version
+
+
 ## [2.0.18] - 2026-04-14
 
 ### Changes
