@@ -1,0 +1,32 @@
+name: Create Tag
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        id: v
+        run: |
+          VERSION=$(grep -Po '(?<=version = ")[^"]+' pyproject.toml)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create tag
+        run: |
+          TAG="v${{ steps.v.outputs.version }}"
+
+          git fetch --tags
+
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag exists"
+            exit 0
+          fi
+
+          git tag "$TAG"
+          git push origin "$TAG"
