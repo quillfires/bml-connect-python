@@ -74,17 +74,20 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.new_version }}"
           DATE=$(date -u +%Y-%m-%d)
-          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          COMMIT_MSG=$(git log -1 --format="%B" HEAD~1)
 
           [ -f CHANGELOG.md ] || printf "# Changelog\n\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n" > CHANGELOG.md
 
           if grep -q "## \[${VERSION}\]" CHANGELOG.md; then
             echo "Changelog already contains version ${VERSION}, skipping"
           else
-            NEW_BLOCK="## [${VERSION}] - ${DATE}\n\n### Changes\n- ${COMMIT_MSG}\n\n"
             head -n 6 CHANGELOG.md > CHANGELOG.tmp
             echo "" >> CHANGELOG.tmp
-            printf "$NEW_BLOCK" >> CHANGELOG.tmp
+            echo "## [${VERSION}] - ${DATE}" >> CHANGELOG.tmp
+            echo "" >> CHANGELOG.tmp
+            echo "### Changes" >> CHANGELOG.tmp
+            echo "$COMMIT_MSG" | grep -v '^$' | head -5 | sed 's/^/- /' >> CHANGELOG.tmp
+            echo "" >> CHANGELOG.tmp
             tail -n +7 CHANGELOG.md >> CHANGELOG.tmp
             mv CHANGELOG.tmp CHANGELOG.md
           fi
