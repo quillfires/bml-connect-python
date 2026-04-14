@@ -7,6 +7,14 @@ This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.
 
 ## [] - 2026-04-13
 
+## [2.0.17] - 2026-04-14
+
+### Changes
+- Simplify release workflow by removing tagging
+
+Removed the tagging process from the release workflow.
+
+
 ## [2.0.16] - 2026-04-14
 
 ### Changes
