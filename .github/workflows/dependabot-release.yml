@@ -1,4 +1,4 @@
-name: Auto Version Bump
+name: Auto Version Bump and Release
 
 on:
   push:
@@ -7,31 +7,34 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 concurrency:
-  group: auto-version-bump
+  group: auto-release
   cancel-in-progress: false
 
 jobs:
-  bump:
-    name: Bump version and tag
+  release:
+    name: Version bump and release
     runs-on: ubuntu-latest
-
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    environment:
+      name: pypi
+      url: https://pypi.org/project/bml-connect-python/
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GH_PAT }}
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
 
-      - name: Configure git
+      - name: Configure git identity
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Install Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -40,62 +43,119 @@ jobs:
         uses: snok/install-poetry@v1
         with:
           version: "1.8.5"
+          virtualenvs-in-project: true
 
-      - name: Sync
+      - name: Pull latest main
         run: git pull --rebase origin main
 
+      # ── Determine bump type ─────────────────────────────────────────────────
       - name: Determine bump type
         id: bump
         run: |
-          MSG="${{ github.event.head_commit.message }}"
-
-          if echo "$MSG" | grep -qi "minor"; then
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          echo "Commit: $COMMIT_MSG"
+          if echo "$COMMIT_MSG" | grep -qi "minor"; then
             echo "type=minor" >> "$GITHUB_OUTPUT"
           else
             echo "type=patch" >> "$GITHUB_OUTPUT"
           fi
 
+      # ── Bump version ────────────────────────────────────────────────────────
       - name: Bump version
         id: version
         run: |
           poetry version ${{ steps.bump.outputs.type }}
-          VERSION=$(poetry version --short)
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "new_version=$(poetry version --short)" >> "$GITHUB_OUTPUT"
 
+      # ── Update CHANGELOG ────────────────────────────────────────────────────
       - name: Update CHANGELOG
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
+          VERSION="${{ steps.version.outputs.new_version }}"
           DATE=$(date -u +%Y-%m-%d)
-          MSG="${{ github.event.head_commit.message }}"
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
 
-          [ -f CHANGELOG.md ] || printf "# Changelog\n\n" > CHANGELOG.md
+          [ -f CHANGELOG.md ] || printf "# Changelog\n\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n" > CHANGELOG.md
 
-          NEW_BLOCK="## [${VERSION}] - ${DATE}\n\n### Changes\n- ${MSG}\n\n"
+          if grep -q "## \[${VERSION}\]" CHANGELOG.md; then
+            echo "Changelog already contains version ${VERSION}, skipping"
+          else
+            NEW_BLOCK="## [${VERSION}] - ${DATE}\n\n### Changes\n- ${COMMIT_MSG}\n\n"
+            head -n 6 CHANGELOG.md > CHANGELOG.tmp
+            echo "" >> CHANGELOG.tmp
+            printf "$NEW_BLOCK" >> CHANGELOG.tmp
+            tail -n +7 CHANGELOG.md >> CHANGELOG.tmp
+            mv CHANGELOG.tmp CHANGELOG.md
+          fi
 
-          head -n 8 CHANGELOG.md > CHANGELOG.tmp || true
-          echo "" >> CHANGELOG.tmp
-          printf "$NEW_BLOCK" >> CHANGELOG.tmp
-          tail -n +9 CHANGELOG.md >> CHANGELOG.tmp 2>/dev/null || true
-          mv CHANGELOG.tmp CHANGELOG.md
+      # ── Regenerate requirements ─────────────────────────────────────────────
+      - name: Regenerate requirements
+        run: |
+          if [ -f requirements.txt ]; then
+            poetry export -f requirements.txt --without-hashes -o requirements.txt
+          fi
+          if [ -f requirements-dev.txt ]; then
+            poetry export -f requirements.txt --with dev --without-hashes -o requirements-dev.txt
+          fi
 
+      # ── Commit ──────────────────────────────────────────────────────────────
       - name: Commit changes
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-
+          VERSION="${{ steps.version.outputs.new_version }}"
           git add pyproject.toml CHANGELOG.md
+          [ -f requirements.txt ]     && git add requirements.txt     || true
+          [ -f requirements-dev.txt ] && git add requirements-dev.txt || true
+          git commit -m "chore(release): v${VERSION} [skip ci]" || echo "No changes to commit"
 
-          git commit -m "chore: bump version to v${VERSION} [skip ci]" || exit 0
-
-      - name: Push commit
+      # ── Push commit and tag ─────────────────────────────────────────────────
+      - name: Push commit and tag
         run: |
-          set -e
+          TAG="v${{ steps.version.outputs.new_version }}"
+
           git push origin main
 
-      - name: Create tag (IMPORTANT FIX)
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          TAG="v$VERSION"
-          sleep 120
+          if git ls-remote --tags origin | grep -q "refs/tags/${TAG}$"; then
+            echo "Stale tag ${TAG} found - deleting"
+            git push origin --delete "${TAG}" || true
+          fi
 
-          git tag -f "$TAG"
-          git push origin "$TAG"
+          git tag "${TAG}"
+          git push origin "${TAG}"
+
+      # ── Run tests before publishing ─────────────────────────────────────────
+      - name: Install dependencies for test
+        run: poetry install --no-interaction
+
+      - name: Run tests
+        run: poetry run pytest -v
+
+      # ── Build ───────────────────────────────────────────────────────────────
+      - name: Build distribution
+        run: poetry build
+
+      # ── Publish to PyPI ─────────────────────────────────────────────────────
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        continue-on-error: true
+
+      # ── Create GitHub Release ───────────────────────────────────────────────
+      - name: Extract changelog notes
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.new_version }}"
+          NOTES=$(awk "/^## \[${VERSION}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
+          if [ -z "$NOTES" ]; then
+            NOTES="See CHANGELOG.md for details."
+          fi
+          echo "notes<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$NOTES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ steps.version.outputs.new_version }}"
+          name: "v${{ steps.version.outputs.new_version }}"
+          body: ${{ steps.changelog.outputs.notes }}
+          files: dist/*
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.new_version, 'a') || contains(steps.version.outputs.new_version, 'b') || contains(steps.version.outputs.new_version, 'rc') }}
