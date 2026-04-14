@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-04-14
+
+### Changes
+- feat: add version bump detection and full commit body parsing
+- Add keyword detection for version bumps
+- Add feat alias for minor bumps
+- Switch to git log -1 --format="%B" to correctly handle multiline commit messages including extended description
+
+
 ## [2.0.24] - 2026-04-14
 
 ### Changes
