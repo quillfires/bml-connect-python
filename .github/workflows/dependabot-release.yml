@@ -92,7 +92,7 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           TAG="v${VERSION}"
           git push origin main
-          git fetch origin main
+          sleep 90
           if git ls-remote --tags origin | grep -q "refs/tags/${TAG}$"; then
             echo "Tag already exists, skipping tag creation"
             exit 0
