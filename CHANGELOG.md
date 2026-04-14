@@ -11,8 +11,6 @@ This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.
 - Update dependabot-release.yml
 
 
-## [] - 2026-04-13
-
 ## [2.0.21] - 2026-04-14
 
 ### Changes
