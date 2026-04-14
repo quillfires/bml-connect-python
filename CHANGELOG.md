@@ -7,6 +7,14 @@ This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.
 
 ## [] - 2026-04-13
 
+## [2.0.15] - 2026-04-14
+
+### Changes
+- Improve tag pushing in dependabot-release workflow
+
+Refactor tag pushing logic to check for existing tags before creation.
+
+
 ## [2.0.14] - 2026-04-13
 
 ### Changes
