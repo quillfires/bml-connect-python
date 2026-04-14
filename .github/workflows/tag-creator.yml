@@ -14,19 +14,19 @@ jobs:
       - name: Get version
         id: v
         run: |
-          VERSION=$(grep -Po '(?<=version = ")[^"]+' pyproject.toml)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
+          VERSION=$(poetry version --short)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      
       - name: Create tag
         run: |
           TAG="v${{ steps.v.outputs.version }}"
-
+      
           git fetch --tags
-
+      
           if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag exists"
+            echo "Tag exists, skipping"
             exit 0
           fi
-
+      
           git tag "$TAG"
           git push origin "$TAG"
