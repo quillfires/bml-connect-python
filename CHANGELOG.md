@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.5] - 2026-05-04
+
+### Changes
+- Merge pull request #33 from quillfires/dependabot/pip/dev-dependencies-6b22a91468
+- chore(deps-dev): bump the dev-dependencies group with 9 updates
+
+
 ## [2.1.4] - 2026-04-27
 
 ### Changes
