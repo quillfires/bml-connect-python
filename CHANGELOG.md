@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.7] - 2026-05-11
+
+### Changes
+- Merge pull request #35 from quillfires/dependabot/pip/production-dependencies-02ca5ce653
+- chore(deps): bump the production-dependencies group with 6 updates
+
+
 ## [2.1.6] - 2026-05-11
 
 ### Changes
