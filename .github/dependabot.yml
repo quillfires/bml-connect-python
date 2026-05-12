@@ -4,13 +4,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      day: "sunday"
+      time: "08:00"
+      timezone: "Indian/Maldives"
     open-pull-requests-limit: 10
-    ignore:
-      - dependency-name: "*"
-        update-types:
-          - "version-update:semver-major"
     groups:
       dev-dependencies:
         dependency-type: "development"
@@ -24,12 +21,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
-      time: "09:00"
-    ignore:
-      - dependency-name: "*"
-        update-types:
-          - "version-update:semver-major"
+      day: "sunday"
+      time: "08:00"
+      timezone: "Indian/Maldives"
     labels:
       - "dependencies"
       - "github-actions"
