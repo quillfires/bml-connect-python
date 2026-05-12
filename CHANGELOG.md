@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.14] - 2026-05-12
+
+### Changes
+- Merge pull request #42 from quillfires/dependabot/github_actions/dependabot/fetch-metadata-3
+- chore(deps): bump dependabot/fetch-metadata from 2 to 3
+
+
 ## [2.1.13] - 2026-05-11
 
 ### Changes
