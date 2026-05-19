@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.29] - 2026-05-19
+
+### Changes
+- Merge pull request #65 from quillfires/dependabot/pip/idna-3.15
+- chore(deps): bump idna from 3.11 to 3.15
+
+
 ## [2.1.28] - 2026-05-18
 
 ### Changes
