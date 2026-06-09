@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.35] - 2026-06-09
+
+### Changes
+- Merge pull request #70 from quillfires/dependabot/github_actions/codecov/codecov-action-7
+- chore(deps): bump codecov/codecov-action from 6 to 7
+
+
 ## [2.1.34] - 2026-06-08
 
 ### Changes
