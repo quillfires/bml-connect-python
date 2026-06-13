@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.38] - 2026-06-13
+
+### Changes
+- Merge pull request #75 from quillfires/renovate/pytest-9.x-lockfile
+- chore(deps): update dependency pytest to v9.1.0
+
+
 ## [2.1.37] - 2026-06-13
 
 ### Changes
