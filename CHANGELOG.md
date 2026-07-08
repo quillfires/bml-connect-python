@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.42] - 2026-07-08
+
+### Changes
+- Merge pull request #79 from quillfires/renovate/mypy-2.x-lockfile
+- chore(deps): update dependency mypy to v2.2.0
+
+
 ## [2.1.41] - 2026-06-24
 
 ### Changes
