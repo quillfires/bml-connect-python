@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.52] - 2026-08-30
+
+### Changes
+- Merge pull request #90 from quillfires/dependabot/pip/dev-dependencies-c3d991aa87
+- chore(deps-dev): bump isort from 8.0.1 to 9.0.0 in the dev-dependencies group
+
+
 ## [2.1.51] - 2026-08-25
 
 ### Changes
