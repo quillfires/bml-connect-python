@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.63] - 2026-10-04
+
+### Changes
+- Merge pull request #100 from quillfires/renovate/black-26.x-lockfile
+- chore(deps): update dependency black to v26.10.0
+
+
 ## [2.1.62] - 2026-10-01
 
 ### Changes
