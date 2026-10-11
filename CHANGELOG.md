@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.68] - 2026-10-11
+
+### Changes
+- Merge pull request #105 from quillfires/dependabot/pip/dev-dependencies-b62482a451
+- chore(deps-dev): bump types-requests from 2.33.0.20260906 to 2.33.0.20261006 in the dev-dependencies group
+
+
 ## [2.1.67] - 2026-10-11
 
 ### Changes
