@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.69] - 2026-10-15
+
+### Changes
+- Merge pull request #106 from quillfires/dependabot/pip/multidict-6.9.1
+- chore(deps): bump multidict from 6.7.1 to 6.9.1
+
+
 ## [2.1.68] - 2026-10-11
 
 ### Changes
