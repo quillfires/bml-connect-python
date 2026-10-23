@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.70] - 2026-10-23
+
+### Changes
+- Merge pull request #107 from quillfires/dependabot/pip/certifi-2026.10.19
+- chore(deps): bump certifi from 2026.2.25 to 2026.10.19
+
+
 ## [2.1.69] - 2026-10-15
 
 ### Changes
