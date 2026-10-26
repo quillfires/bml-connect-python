@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.71] - 2026-10-26
+
+### Changes
+- Merge pull request #108 from quillfires/renovate/pytest-asyncio-1.x-lockfile
+- chore(deps): update dependency pytest-asyncio to v1.4.1
+
+
 ## [2.1.70] - 2026-10-23
 
 ### Changes
