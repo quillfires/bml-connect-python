@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project mostly adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.78] - 2026-11-21
+
+### Changes
+- Merge pull request #115 from quillfires/renovate/poetry-2.x
+- chore(deps): update dependency poetry to v2.5.2
+
+
 ## [2.1.77] - 2026-11-12
 
 ### Changes
